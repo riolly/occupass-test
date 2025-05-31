@@ -5,8 +5,8 @@ import DataTable, { createColumn } from "../components/DataTable";
 import type { Order } from "../types/api";
 import type { ColumnDef } from "@tanstack/react-table";
 import { Input } from "../components/ui/Input";
-import { useEffect, useState } from "react";
-import { useDebounce } from "../hooks/useDebounce";
+import { useCallback } from "react";
+import { useDebouncedSearch } from "../hooks/useDebounce";
 
 interface OrderSearchParams {
   page?: number;
@@ -37,32 +37,23 @@ function OrdersPage() {
     sortOrder = "asc",
   } = Route.useSearch();
 
-  // Local state for immediate UI updates
-  const [localFreight, setLocalFreight] = useState(freight?.toString() || "");
+  const updateSearch = useCallback(
+    (updates: Partial<OrderSearchParams>) => {
+      navigate({
+        search: (prev) => ({ ...prev, ...updates, page: updates.page || 1 }),
+      });
+    },
+    [navigate]
+  );
 
-  // Debounced value
-  const debouncedFreight = useDebounce(localFreight, 500);
-
-  // Sync local state with URL params when they change
-  useEffect(() => {
-    setLocalFreight(freight?.toString() || "");
-  }, [freight]);
-
-  const updateSearch = (updates: Partial<OrderSearchParams>) => {
-    navigate({
-      search: (prev) => ({ ...prev, ...updates, page: updates.page || 1 }),
-    });
-  };
-
-  // Update search when debounced value changes
-  useEffect(() => {
-    const freightValue = debouncedFreight
-      ? Number(debouncedFreight)
-      : undefined;
-    if (freightValue !== freight) {
+  // Debounced search hook for freight
+  const freightSearch = useDebouncedSearch(
+    freight?.toString() || "",
+    (value) => {
+      const freightValue = value ? Number(value) : undefined;
       updateSearch({ freight: freightValue, page: 1 });
     }
-  }, [debouncedFreight]);
+  );
 
   const { data, isLoading, error } = useQuery({
     queryKey: ["orders", { page, pageSize, freight, sortBy, sortOrder }],
@@ -133,9 +124,9 @@ function OrdersPage() {
           <div className="space-y-1">
             <Input
               type="number"
-              value={localFreight}
+              value={freightSearch.value}
               onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                setLocalFreight(e.target.value)
+                freightSearch.setValue(e.target.value)
               }
               placeholder="e.g., 32,38"
               className="max-w-sm bg-background"
