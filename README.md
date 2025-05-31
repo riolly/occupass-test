@@ -27,8 +27,17 @@ pnpm test
 
 ## Styling
 
-This project uses CSS for styling.
+This project uses [Tailwind CSS](https://tailwindcss.com/) for styling.
 
+
+
+## Shadcn
+
+Add components using the latest version of [Shadcn](https://ui.shadcn.com/).
+
+```bash
+pnpx shadcn@latest add button
+```
 
 
 
