@@ -1,8 +1,9 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { ordersApi, formatDate } from "../services/api";
-import DataTable, { type Column } from "../components/DataTable";
+import DataTable, { createColumn } from "../components/DataTable";
 import type { Order } from "../types/api";
+import type { ColumnDef } from "@tanstack/react-table";
 
 interface OrderSearchParams {
   page?: number;
@@ -32,12 +33,6 @@ function OrdersPage() {
     sortBy = "",
     sortOrder = "asc",
   } = Route.useSearch();
-
-  const updateSearch = (updates: Partial<OrderSearchParams>) => {
-    navigate({
-      search: (prev) => ({ ...prev, ...updates, page: updates.page || 1 }),
-    });
-  };
 
   const { data, isLoading, error } = useQuery({
     queryKey: ["orders", { page, pageSize, search, sortBy, sortOrder }],
@@ -79,51 +74,23 @@ function OrdersPage() {
     },
   });
 
-  const columns: Column<Order>[] = [
-    {
-      key: "id",
-      label: "Order ID",
-      sortable: true,
-    },
-    {
-      key: "customerId",
-      label: "Customer ID",
-      sortable: true,
-    },
-    {
-      key: "orderDate",
-      label: "Order Date",
-      sortable: true,
-      render: (value) => formatDate(value),
-    },
-    {
-      key: "shipName",
-      label: "Ship Name",
-      sortable: true,
-    },
-    {
-      key: "shipCity",
-      label: "Ship City",
-      sortable: true,
-    },
-    {
-      key: "shipCountry",
-      label: "Ship Country",
-      sortable: true,
-    },
-    {
-      key: "freight",
-      label: "Freight",
-      sortable: true,
-      render: (value) => `$${Number(value).toFixed(2)}`,
-    },
+  const columns: ColumnDef<Order>[] = [
+    createColumn("id", "Order ID"),
+    createColumn("customerId", "Customer ID"),
+    createColumn("orderDate", "Order Date", {
+      cell: (value) => formatDate(value as string),
+    }),
+    createColumn("shipName", "Ship Name"),
+    createColumn("shipCity", "Ship City"),
+    createColumn("shipCountry", "Ship Country"),
+    createColumn("freight", "Freight", {
+      cell: (value) => `$${Number(value).toFixed(2)}`,
+    }),
   ];
 
   const handleRowClick = (order: Order) => {
     navigate({ to: `/orders/${order.id}` });
   };
-
-  const totalPages = data ? Math.ceil(data.total / pageSize) : 0;
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -137,26 +104,11 @@ function OrdersPage() {
         columns={columns}
         loading={isLoading}
         error={error?.message}
-        pagination={{
-          currentPage: page,
-          totalPages,
-          pageSize,
-          total: data?.total || 0,
-          onPageChange: (newPage) => updateSearch({ page: newPage }),
-          onPageSizeChange: (newPageSize) =>
-            updateSearch({ pageSize: newPageSize, page: 1 }),
-        }}
-        sorting={{
-          sortBy,
-          sortOrder,
-          onSort: (key, order) =>
-            updateSearch({ sortBy: key, sortOrder: order }),
-        }}
-        filtering={{
-          searchQuery: search,
-          onSearchChange: (query) => updateSearch({ search: query, page: 1 }),
-        }}
         onRowClick={handleRowClick}
+        initialPageSize={pageSize}
+        enablePagination={true}
+        enableSorting={true}
+        enableFiltering={true}
       />
     </div>
   );

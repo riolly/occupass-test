@@ -2,7 +2,7 @@ import { Link } from "@tanstack/react-router";
 
 export default function Header() {
   return (
-    <header className="p-4 bg-blue-600 text-white shadow-lg">
+    <header className="p-4 bg-primary text-white shadow-lg">
       <div className="container mx-auto">
         <nav className="flex items-center justify-between">
           <div className="text-xl font-bold">

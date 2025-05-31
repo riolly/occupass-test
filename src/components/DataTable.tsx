@@ -1,11 +1,24 @@
-import { Input } from "./ui/Input";
+import * as React from "react";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "./ui/Select";
+  useReactTable,
+  getCoreRowModel,
+  getSortedRowModel,
+  getFilteredRowModel,
+  getPaginationRowModel,
+  flexRender,
+  type ColumnDef,
+  type SortingState,
+  type ColumnFiltersState,
+  type VisibilityState,
+} from "@tanstack/react-table";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "./ui/table";
 import {
   Pagination,
   PaginationContent,
@@ -15,177 +28,195 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "./ui/pagination";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "./ui/Select";
+import { Input } from "./ui/Input";
 import { ChevronUpIcon, ChevronDownIcon } from "lucide-react";
 
-export interface Column<T> {
-  key: keyof T;
-  label: string;
-  sortable?: boolean;
-  render?: (value: any, item: T) => React.ReactNode;
-}
-
-interface DataTableProps<T> {
-  data: T[];
-  columns: Column<T>[];
+interface DataTableProps<TData, TValue> {
+  columns: ColumnDef<TData, TValue>[];
+  data: TData[];
   loading?: boolean;
   error?: string;
-  pagination?: {
-    currentPage: number;
-    totalPages: number;
-    pageSize: number;
-    total: number;
-    onPageChange: (page: number) => void;
-    onPageSizeChange: (size: number) => void;
-  };
-  sorting?: {
-    sortBy?: string;
-    sortOrder?: "asc" | "desc";
-    onSort: (key: string, order: "asc" | "desc") => void;
-  };
-  filtering?: {
-    searchQuery: string;
-    onSearchChange: (query: string) => void;
-    filters?: React.ReactNode;
-  };
-  onRowClick?: (item: T) => void;
+  enablePagination?: boolean;
+  enableSorting?: boolean;
+  enableFiltering?: boolean;
+  onRowClick?: (row: TData) => void;
+  initialPageSize?: number;
 }
 
-export default function DataTable<T extends Record<string, any>>({
-  data,
+export default function DataTable<TData, TValue>({
   columns,
-  loading,
+  data,
+  loading = false,
   error,
-  pagination,
-  sorting,
-  filtering,
+  enablePagination = true,
+  enableSorting = true,
+  enableFiltering = true,
   onRowClick,
-}: DataTableProps<T>) {
+  initialPageSize = 25,
+}: DataTableProps<TData, TValue>) {
+  const [sorting, setSorting] = React.useState<SortingState>([]);
+  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
+    []
+  );
+  const [columnVisibility, setColumnVisibility] =
+    React.useState<VisibilityState>({});
+  const [globalFilter, setGlobalFilter] = React.useState("");
+
+  const table = useReactTable({
+    data,
+    columns,
+    getCoreRowModel: getCoreRowModel(),
+    getSortedRowModel: enableSorting ? getSortedRowModel() : undefined,
+    getFilteredRowModel: enableFiltering ? getFilteredRowModel() : undefined,
+    getPaginationRowModel: enablePagination
+      ? getPaginationRowModel()
+      : undefined,
+    onSortingChange: setSorting,
+    onColumnFiltersChange: setColumnFilters,
+    onColumnVisibilityChange: setColumnVisibility,
+    onGlobalFilterChange: setGlobalFilter,
+    globalFilterFn: "includesString",
+    initialState: {
+      pagination: {
+        pageSize: initialPageSize,
+      },
+    },
+    state: {
+      sorting,
+      columnFilters,
+      columnVisibility,
+      globalFilter,
+    },
+  });
+
   if (error) {
-    return <div className="p-4 text-center text-red-600">Error: {error}</div>;
+    return (
+      <div className="flex items-center justify-center p-8">
+        <div className="text-center">
+          <p className="text-red-600 font-medium">Error loading data</p>
+          <p className="text-sm text-gray-500 mt-1">{error}</p>
+        </div>
+      </div>
+    );
   }
 
-  const handleSort = (key: string) => {
-    if (!sorting) return;
-
-    const newOrder =
-      sorting.sortBy === key && sorting.sortOrder === "asc" ? "desc" : "asc";
-    sorting.onSort(key, newOrder);
-  };
-
-  const getSortIcon = (key: string) => {
-    if (!sorting || sorting.sortBy !== key) return null;
-    return sorting.sortOrder === "asc" ? (
-      <ChevronUpIcon className="w-4 h-4" />
-    ) : (
-      <ChevronDownIcon className="w-4 h-4" />
-    );
-  };
-
   return (
-    <div className="w-full space-y-4">
-      {/* Filters */}
-      {filtering && (
-        <div className="flex flex-col gap-4 bg-gray-50 rounded-lg">
-          <div className="flex gap-4 items-end">
-            <div className="flex-1">
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">
-                  Search
-                </label>
-                <Input
-                  value={filtering.searchQuery}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                    filtering.onSearchChange(e.target.value)
-                  }
-                  placeholder="Search..."
-                />
-              </div>
-            </div>
-            {filtering.filters}
-          </div>
+    <div className="space-y-4">
+      {/* Global Filter */}
+      {enableFiltering && (
+        <div className="flex items-center gap-2">
+          <Input
+            placeholder="Search all columns..."
+            value={globalFilter}
+            onChange={(e) => setGlobalFilter(e.target.value)}
+            className="max-w-sm"
+          />
         </div>
       )}
 
       {/* Table */}
-      <div className="border border-gray-200 rounded-lg overflow-hidden">
-        <table className="w-full">
-          <thead className="bg-gray-50">
-            <tr>
-              {columns.map((column) => (
-                <th
-                  key={String(column.key)}
-                  className={`px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider ${
-                    column.sortable ? "cursor-pointer hover:bg-gray-100" : ""
-                  }`}
-                  onClick={() =>
-                    column.sortable && handleSort(String(column.key))
-                  }
-                >
-                  <div className="flex items-center gap-2">
-                    {column.label}
-                    {column.sortable && getSortIcon(String(column.key))}
-                  </div>
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
+      <div className="rounded-md border">
+        <Table>
+          <TableHeader>
+            {table.getHeaderGroups().map((headerGroup) => (
+              <TableRow key={headerGroup.id}>
+                {headerGroup.headers.map((header) => (
+                  <TableHead key={header.id} className="relative">
+                    {header.isPlaceholder ? null : (
+                      <div
+                        className={`flex items-center gap-2 ${
+                          header.column.getCanSort()
+                            ? "cursor-pointer select-none"
+                            : ""
+                        }`}
+                        onClick={header.column.getToggleSortingHandler()}
+                      >
+                        {flexRender(
+                          header.column.columnDef.header,
+                          header.getContext()
+                        )}
+                        {enableSorting && header.column.getCanSort() && (
+                          <div className="ml-auto">
+                            {{
+                              asc: <ChevronUpIcon className="h-4 w-4" />,
+                              desc: <ChevronDownIcon className="h-4 w-4" />,
+                            }[header.column.getIsSorted() as string] ?? (
+                              <div className="h-4 w-4" />
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </TableHead>
+                ))}
+              </TableRow>
+            ))}
+          </TableHeader>
+          <TableBody>
             {loading ? (
-              <tr>
-                <td
+              <TableRow>
+                <TableCell
                   colSpan={columns.length}
-                  className="px-6 py-4 text-center text-gray-500"
+                  className="h-24 text-center"
                 >
                   Loading...
-                </td>
-              </tr>
-            ) : data.length === 0 ? (
-              <tr>
-                <td
-                  colSpan={columns.length}
-                  className="px-6 py-4 text-center text-gray-500"
+                </TableCell>
+              </TableRow>
+            ) : table.getRowModel().rows?.length ? (
+              table.getRowModel().rows.map((row) => (
+                <TableRow
+                  key={row.id}
+                  data-state={row.getIsSelected() && "selected"}
+                  className={onRowClick ? "cursor-pointer" : ""}
+                  onClick={() => onRowClick?.(row.original)}
                 >
-                  No data found
-                </td>
-              </tr>
-            ) : (
-              data.map((item, index) => (
-                <tr
-                  key={index}
-                  className={`${
-                    onRowClick ? "hover:bg-gray-50 cursor-pointer" : ""
-                  }`}
-                  onClick={() => onRowClick?.(item)}
-                >
-                  {columns.map((column) => (
-                    <td
-                      key={String(column.key)}
-                      className="px-6 py-4 whitespace-nowrap text-sm text-gray-900"
-                    >
-                      {column.render
-                        ? column.render(item[column.key], item)
-                        : String(item[column.key] || "")}
-                    </td>
+                  {row.getVisibleCells().map((cell) => (
+                    <TableCell key={cell.id}>
+                      {flexRender(
+                        cell.column.columnDef.cell,
+                        cell.getContext()
+                      )}
+                    </TableCell>
                   ))}
-                </tr>
+                </TableRow>
               ))
+            ) : (
+              <TableRow>
+                <TableCell
+                  colSpan={columns.length}
+                  className="h-24 text-center"
+                >
+                  No results found.
+                </TableCell>
+              </TableRow>
             )}
-          </tbody>
-        </table>
+          </TableBody>
+        </Table>
       </div>
 
       {/* Pagination */}
-      {pagination && (
+      {enablePagination && (
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <span className="text-sm text-gray-700">
-              Showing {(pagination.currentPage - 1) * pagination.pageSize + 1}{" "}
+              Showing{" "}
+              {table.getState().pagination.pageIndex *
+                table.getState().pagination.pageSize +
+                1}{" "}
               to{" "}
               {Math.min(
-                pagination.currentPage * pagination.pageSize,
-                pagination.total
+                (table.getState().pagination.pageIndex + 1) *
+                  table.getState().pagination.pageSize,
+                table.getFilteredRowModel().rows.length
               )}{" "}
-              of {pagination.total} results
+              of {table.getFilteredRowModel().rows.length} results
             </span>
           </div>
 
@@ -195,10 +226,10 @@ export default function DataTable<T extends Record<string, any>>({
                 Rows per page:
               </span>
               <Select
-                value={pagination.pageSize.toString()}
-                onValueChange={(value: string) =>
-                  pagination.onPageSizeChange(Number(value))
-                }
+                value={table.getState().pagination.pageSize.toString()}
+                onValueChange={(value: string) => {
+                  table.setPageSize(Number(value));
+                }}
               >
                 <SelectTrigger className="w-[70px]">
                   <SelectValue />
@@ -219,94 +250,64 @@ export default function DataTable<T extends Record<string, any>>({
                     href="#"
                     onClick={(e) => {
                       e.preventDefault();
-                      if (pagination.currentPage > 1) {
-                        pagination.onPageChange(pagination.currentPage - 1);
-                      }
+                      table.previousPage();
                     }}
                     className={
-                      pagination.currentPage <= 1
+                      !table.getCanPreviousPage()
                         ? "pointer-events-none opacity-50"
                         : ""
                     }
                   />
                 </PaginationItem>
 
-                {/* First page */}
-                {pagination.currentPage > 3 && (
-                  <>
-                    <PaginationItem>
-                      <PaginationLink
-                        href="#"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          pagination.onPageChange(1);
-                        }}
-                      >
-                        1
-                      </PaginationLink>
-                    </PaginationItem>
-                    {pagination.currentPage > 4 && (
-                      <PaginationItem>
-                        <PaginationEllipsis />
-                      </PaginationItem>
-                    )}
-                  </>
-                )}
-
-                {/* Page numbers around current page */}
-                {Array.from({ length: pagination.totalPages }, (_, i) => i + 1)
+                {/* Page numbers with ellipsis */}
+                {Array.from({ length: table.getPageCount() }, (_, i) => i)
                   .filter((page) => {
-                    const distance = Math.abs(page - pagination.currentPage);
-                    return distance <= 2;
+                    const currentPage = table.getState().pagination.pageIndex;
+                    const distance = Math.abs(page - currentPage);
+                    return (
+                      distance <= 2 ||
+                      page === 0 ||
+                      page === table.getPageCount() - 1
+                    );
                   })
-                  .map((page) => (
-                    <PaginationItem key={page}>
-                      <PaginationLink
-                        href="#"
-                        isActive={page === pagination.currentPage}
-                        onClick={(e) => {
-                          e.preventDefault();
-                          pagination.onPageChange(page);
-                        }}
-                      >
-                        {page}
-                      </PaginationLink>
-                    </PaginationItem>
-                  ))}
+                  .map((page, index, array) => {
+                    const currentPage = table.getState().pagination.pageIndex;
+                    const showEllipsis =
+                      index > 0 && array[index - 1] !== page - 1;
 
-                {/* Last page */}
-                {pagination.currentPage < pagination.totalPages - 2 && (
-                  <>
-                    {pagination.currentPage < pagination.totalPages - 3 && (
-                      <PaginationItem>
-                        <PaginationEllipsis />
-                      </PaginationItem>
-                    )}
-                    <PaginationItem>
-                      <PaginationLink
-                        href="#"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          pagination.onPageChange(pagination.totalPages);
-                        }}
-                      >
-                        {pagination.totalPages}
-                      </PaginationLink>
-                    </PaginationItem>
-                  </>
-                )}
+                    return (
+                      <React.Fragment key={page}>
+                        {showEllipsis && (
+                          <PaginationItem>
+                            <PaginationEllipsis />
+                          </PaginationItem>
+                        )}
+                        <PaginationItem>
+                          <PaginationLink
+                            href="#"
+                            isActive={page === currentPage}
+                            onClick={(e) => {
+                              e.preventDefault();
+                              table.setPageIndex(page);
+                            }}
+                          >
+                            {page + 1}
+                          </PaginationLink>
+                        </PaginationItem>
+                      </React.Fragment>
+                    );
+                  })}
 
                 <PaginationItem>
                   <PaginationNext
                     href="#"
                     onClick={(e) => {
                       e.preventDefault();
-                      if (pagination.currentPage < pagination.totalPages) {
-                        pagination.onPageChange(pagination.currentPage + 1);
-                      }
+                      table.nextPage();
                     }}
                     className={
-                      pagination.currentPage >= pagination.totalPages
+                      !table.getCanNextPage()
                         ? "pointer-events-none opacity-50"
                         : ""
                     }
@@ -319,4 +320,23 @@ export default function DataTable<T extends Record<string, any>>({
       )}
     </div>
   );
+}
+
+// Helper function to create simple columns
+export function createColumn<TData, TValue = unknown>(
+  accessorKey: keyof TData,
+  header: string,
+  options?: {
+    sortable?: boolean;
+    cell?: (value: TValue) => React.ReactNode;
+  }
+): ColumnDef<TData, TValue> {
+  return {
+    accessorKey: accessorKey as string,
+    header,
+    enableSorting: options?.sortable ?? true,
+    cell: options?.cell
+      ? ({ getValue }) => options.cell!(getValue() as TValue)
+      : ({ getValue }) => String(getValue() ?? ""),
+  };
 }

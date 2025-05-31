@@ -1,9 +1,9 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { customersApi } from "../services/api";
-import DataTable, { type Column } from "../components/DataTable";
+import DataTable, { createColumn } from "../components/DataTable";
 import type { Customer } from "../types/api";
-import { Input } from "../components/ui/Input";
+import type { ColumnDef } from "@tanstack/react-table";
 
 interface CustomerSearchParams {
   page?: number;
@@ -36,12 +36,6 @@ function CustomersPage() {
     sortBy = "",
     sortOrder = "asc",
   } = Route.useSearch();
-
-  const updateSearch = (updates: Partial<CustomerSearchParams>) => {
-    navigate({
-      search: (prev) => ({ ...prev, ...updates, page: updates.page || 1 }),
-    });
-  };
 
   const { data, isLoading, error } = useQuery({
     queryKey: [
@@ -89,48 +83,19 @@ function CustomersPage() {
     },
   });
 
-  const columns: Column<Customer>[] = [
-    {
-      key: "id",
-      label: "ID",
-      sortable: true,
-    },
-    {
-      key: "companyName",
-      label: "Company Name",
-      sortable: true,
-    },
-    {
-      key: "contactName",
-      label: "Contact Name",
-      sortable: true,
-    },
-    {
-      key: "contactTitle",
-      label: "Contact Title",
-      sortable: true,
-    },
-    {
-      key: "city",
-      label: "City",
-      sortable: true,
-    },
-    {
-      key: "country",
-      label: "Country",
-      sortable: true,
-    },
-    {
-      key: "phone",
-      label: "Phone",
-    },
+  const columns: ColumnDef<Customer>[] = [
+    createColumn("id", "ID"),
+    createColumn("companyName", "Company Name"),
+    createColumn("contactName", "Contact Name"),
+    createColumn("contactTitle", "Contact Title"),
+    createColumn("city", "City"),
+    createColumn("country", "Country"),
+    createColumn("phone", "Phone", { sortable: false }),
   ];
 
   const handleRowClick = (customer: Customer) => {
     navigate({ to: `/customers/${customer.id}` });
   };
-
-  const totalPages = data ? Math.ceil(data.total / pageSize) : 0;
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -146,42 +111,11 @@ function CustomersPage() {
         columns={columns}
         loading={isLoading}
         error={error?.message}
-        pagination={{
-          currentPage: page,
-          totalPages,
-          pageSize,
-          total: data?.total || 0,
-          onPageChange: (newPage) => updateSearch({ page: newPage }),
-          onPageSizeChange: (newPageSize) =>
-            updateSearch({ pageSize: newPageSize, page: 1 }),
-        }}
-        sorting={{
-          sortBy,
-          sortOrder,
-          onSort: (key, order) =>
-            updateSearch({ sortBy: key, sortOrder: order }),
-        }}
-        filtering={{
-          searchQuery: search,
-          onSearchChange: (query) => updateSearch({ search: query, page: 1 }),
-          filters: (
-            <div className="flex gap-4">
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">
-                  Country Filter
-                </label>
-                <Input
-                  value={country}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                    updateSearch({ country: e.target.value, page: 1 })
-                  }
-                  placeholder="Enter country name..."
-                />
-              </div>
-            </div>
-          ),
-        }}
         onRowClick={handleRowClick}
+        initialPageSize={pageSize}
+        enablePagination={true}
+        enableSorting={true}
+        enableFiltering={true}
       />
     </div>
   );
