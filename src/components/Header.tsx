@@ -15,7 +15,7 @@ export default function Header() {
         <div className="flex items-center justify-between">
           <div className="text-xl font-bold">
             <Link to="/" className="hover:text-blue-200">
-              Customer & Orders Management
+              Dashboard
             </Link>
           </div>
 

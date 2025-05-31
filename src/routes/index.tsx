@@ -20,8 +20,7 @@ function HomePage() {
           Customer & Orders Management
         </h1>
         <p className="text-xl text-gray-600 mb-8">
-          Manage your customers and orders efficiently with our comprehensive
-          dashboard
+          Manage your customers and orders efficiently
         </p>
       </div>
 
@@ -47,7 +46,7 @@ function HomePage() {
             <CardTitle>Customers</CardTitle>
             <CardDescription>
               View and manage customer information, contact details, and
-              addresses. Search and filter customers by various criteria.
+              addresses.
             </CardDescription>
           </CardHeader>
           <CardFooter className="justify-center">
@@ -78,7 +77,6 @@ function HomePage() {
             <CardTitle>Orders</CardTitle>
             <CardDescription>
               Track and manage orders, shipping information, and order history.
-              Sort and filter orders by date, customer, and status.
             </CardDescription>
           </CardHeader>
           <CardFooter className="justify-center">
