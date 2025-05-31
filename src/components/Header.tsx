@@ -15,35 +15,37 @@ export default function Header() {
         <div className="flex items-center justify-between">
           <div className="text-xl font-bold">
             <Link to="/" className="hover:text-blue-200">
-              Dashboard
+              Customer & Orders Management
             </Link>
           </div>
 
           <NavigationMenu>
             <NavigationMenuList>
               <NavigationMenuItem>
-                <Link to="/customers">
-                  <NavigationMenuLink
+                <NavigationMenuLink asChild>
+                  <Link
+                    to="/customers"
                     className={cn(
                       navigationMenuTriggerStyle(),
                       "bg-transparent text-white hover:bg-white/10 hover:text-white focus:bg-white/10 focus:text-white data-[active]:bg-white/20 data-[active]:text-white"
                     )}
                   >
                     Customers
-                  </NavigationMenuLink>
-                </Link>
+                  </Link>
+                </NavigationMenuLink>
               </NavigationMenuItem>
               <NavigationMenuItem>
-                <Link to="/orders">
-                  <NavigationMenuLink
+                <NavigationMenuLink asChild>
+                  <Link
+                    to="/orders"
                     className={cn(
                       navigationMenuTriggerStyle(),
                       "bg-transparent text-white hover:bg-white/10 hover:text-white focus:bg-white/10 focus:text-white data-[active]:bg-white/20 data-[active]:text-white"
                     )}
                   >
                     Orders
-                  </NavigationMenuLink>
-                </Link>
+                  </Link>
+                </NavigationMenuLink>
               </NavigationMenuItem>
             </NavigationMenuList>
           </NavigationMenu>
