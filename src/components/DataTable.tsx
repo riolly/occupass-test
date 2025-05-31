@@ -111,11 +111,27 @@ export default function DataTable<TData, TValue>({
   };
 
   const getSortIcon = (key: string) => {
-    if (!enableSorting || sortBy !== key) return null;
-    return sortOrder === "asc" ? (
-      <ChevronUpIcon className="h-4 w-4" />
-    ) : (
-      <ChevronDownIcon className="h-4 w-4" />
+    if (!enableSorting) return null;
+
+    const isActive = sortBy === key;
+    const iconClass = isActive
+      ? "h-4 w-4 text-gray-900" // Prominent when active
+      : "h-3 w-3 text-gray-400 opacity-50"; // Subtle when inactive
+
+    if (isActive) {
+      return sortOrder === "asc" ? (
+        <ChevronUpIcon className={iconClass} />
+      ) : (
+        <ChevronDownIcon className={iconClass} />
+      );
+    }
+
+    // Show both up and down arrows for inactive sortable columns
+    return (
+      <div className="flex flex-col -space-y-1">
+        <ChevronUpIcon className={iconClass} />
+        <ChevronDownIcon className={iconClass} />
+      </div>
     );
   };
 
@@ -141,24 +157,24 @@ export default function DataTable<TData, TValue>({
                 <TableHead key={header.id} className="relative">
                   {header.isPlaceholder ? null : (
                     <div
-                      className={`flex items-center gap-2 ${
+                      className={`flex items-center justify-between font-bold ${
                         enableSorting && onSort
-                          ? "cursor-pointer select-none"
+                          ? "cursor-pointer select-none hover:text-gray-900"
                           : ""
                       }`}
                       onClick={() =>
                         enableSorting && handleSort(header.column.id)
                       }
                     >
-                      {flexRender(
-                        header.column.columnDef.header,
-                        header.getContext()
-                      )}
+                      <span>
+                        {flexRender(
+                          header.column.columnDef.header,
+                          header.getContext()
+                        )}
+                      </span>
                       {enableSorting && onSort && (
-                        <div className="ml-auto">
-                          {getSortIcon(header.column.id) || (
-                            <div className="h-4 w-4" />
-                          )}
+                        <div className="ml-2 flex-shrink-0">
+                          {getSortIcon(header.column.id)}
                         </div>
                       )}
                     </div>
