@@ -1,6 +1,12 @@
 import { Button } from "./ui/Button";
-import Input from "./ui/Input";
-import Select from "./ui/Select";
+import { Input } from "./ui/Input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "./ui/Select";
 import { ChevronUpIcon, ChevronDownIcon } from "lucide-react";
 
 export interface Column<T> {
@@ -74,12 +80,18 @@ export default function DataTable<T extends Record<string, any>>({
         <div className="flex flex-col gap-4 bg-gray-50 rounded-lg">
           <div className="flex gap-4 items-end">
             <div className="flex-1">
-              <Input
-                label="Search"
-                value={filtering.searchQuery}
-                onChange={(e) => filtering.onSearchChange(e.target.value)}
-                placeholder="Search..."
-              />
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700">
+                  Search
+                </label>
+                <Input
+                  value={filtering.searchQuery}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                    filtering.onSearchChange(e.target.value)
+                  }
+                  placeholder="Search..."
+                />
+              </div>
             </div>
             {filtering.filters}
           </div>
@@ -174,16 +186,20 @@ export default function DataTable<T extends Record<string, any>>({
               <span className="text-sm text-gray-700">Rows per page:</span>
               <Select
                 value={pagination.pageSize.toString()}
-                onChange={(e) =>
-                  pagination.onPageSizeChange(Number(e.target.value))
+                onValueChange={(value: string) =>
+                  pagination.onPageSizeChange(Number(value))
                 }
-                options={[
-                  { value: "10", label: "10" },
-                  { value: "25", label: "25" },
-                  { value: "50", label: "50" },
-                  { value: "100", label: "100" },
-                ]}
-              />
+              >
+                <SelectTrigger className="w-[70px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="10">10</SelectItem>
+                  <SelectItem value="25">25</SelectItem>
+                  <SelectItem value="50">50</SelectItem>
+                  <SelectItem value="100">100</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
             <div className="flex items-center gap-2">

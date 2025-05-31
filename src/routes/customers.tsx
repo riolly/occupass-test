@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { customersApi } from "../services/api";
 import DataTable, { type Column } from "../components/DataTable";
 import type { Customer } from "../types/api";
-import Input from "../components/ui/Input";
+import { Input } from "../components/ui/Input";
 
 interface CustomerSearchParams {
   page?: number;
@@ -166,14 +166,18 @@ function CustomersPage() {
           onSearchChange: (query) => updateSearch({ search: query, page: 1 }),
           filters: (
             <div className="flex gap-4">
-              <Input
-                label="Country Filter"
-                value={country}
-                onChange={(e) =>
-                  updateSearch({ country: e.target.value, page: 1 })
-                }
-                placeholder="Enter country name..."
-              />
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700">
+                  Country Filter
+                </label>
+                <Input
+                  value={country}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                    updateSearch({ country: e.target.value, page: 1 })
+                  }
+                  placeholder="Enter country name..."
+                />
+              </div>
             </div>
           ),
         }}
