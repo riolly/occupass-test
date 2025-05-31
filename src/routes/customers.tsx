@@ -108,10 +108,6 @@ function CustomersPage() {
     createColumn("phone", "Phone", { sortable: false }),
   ];
 
-  const handleRowClick = (customer: Customer) => {
-    navigate({ to: `/customers/${customer.id}` });
-  };
-
   const pageCount = data ? Math.ceil(data.total / pageSize) : 0;
 
   return (
@@ -158,7 +154,6 @@ function CustomersPage() {
         columns={columns}
         loading={isLoading}
         error={error?.message}
-        onRowClick={handleRowClick}
         // Server-side pagination
         enablePagination={true}
         pageCount={pageCount}

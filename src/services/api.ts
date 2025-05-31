@@ -66,11 +66,6 @@ export const ordersApi = {
     }
     return order;
   },
-
-  async getOrdersForCustomer(customerId: string): Promise<Order[]> {
-    const response = await ordersApi.queryOrders({ take: 1000 }); // Get all orders and filter locally
-    return response.results.filter((order) => order.customerId === customerId);
-  },
 };
 
 // Utility function to format dates from the API

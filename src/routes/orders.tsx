@@ -102,10 +102,6 @@ function OrdersPage() {
     }),
   ];
 
-  const handleRowClick = (order: Order) => {
-    navigate({ to: `/orders/${order.id}` });
-  };
-
   const pageCount = data ? Math.ceil(data.total / pageSize) : 0;
 
   return (
@@ -143,7 +139,6 @@ function OrdersPage() {
         columns={columns}
         loading={isLoading}
         error={error?.message}
-        onRowClick={handleRowClick}
         // Server-side pagination
         enablePagination={true}
         pageCount={pageCount}
