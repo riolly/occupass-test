@@ -1,5 +1,12 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Button } from "../components/ui/Button";
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  CardFooter,
+} from "../components/ui/card";
 
 export const Route = createFileRoute("/")({
   component: HomePage,
@@ -18,11 +25,11 @@ function HomePage() {
         </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-2xl mx-auto">
         {/* Customers Card */}
-        <div className="bg-white rounded-lg shadow-lg p-6 border border-gray-200">
-          <div className="text-center">
-            <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+        <Card>
+          <CardHeader className="text-center">
+            <div className="w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-4">
               <svg
                 className="w-8 h-8 text-blue-600"
                 fill="none"
@@ -37,21 +44,23 @@ function HomePage() {
                 />
               </svg>
             </div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-3">Customers</h2>
-            <p className="text-gray-600 mb-6">
+            <CardTitle>Customers</CardTitle>
+            <CardDescription>
               View and manage customer information, contact details, and
               addresses. Search and filter customers by various criteria.
-            </p>
+            </CardDescription>
+          </CardHeader>
+          <CardFooter className="justify-center">
             <Link to="/customers">
               <Button className="w-full">View Customers</Button>
             </Link>
-          </div>
-        </div>
+          </CardFooter>
+        </Card>
 
         {/* Orders Card */}
-        <div className="bg-white rounded-lg shadow-lg p-6 border border-gray-200">
-          <div className="text-center">
-            <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+        <Card>
+          <CardHeader className="text-center">
+            <div className="w-16 h-16 bg-green-50 rounded-full flex items-center justify-center mx-auto mb-4">
               <svg
                 className="w-8 h-8 text-green-600"
                 fill="none"
@@ -66,16 +75,18 @@ function HomePage() {
                 />
               </svg>
             </div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-3">Orders</h2>
-            <p className="text-gray-600 mb-6">
+            <CardTitle>Orders</CardTitle>
+            <CardDescription>
               Track and manage orders, shipping information, and order history.
               Sort and filter orders by date, customer, and status.
-            </p>
+            </CardDescription>
+          </CardHeader>
+          <CardFooter className="justify-center">
             <Link to="/orders">
               <Button className="w-full">View Orders</Button>
             </Link>
-          </div>
-        </div>
+          </CardFooter>
+        </Card>
       </div>
     </div>
   );
