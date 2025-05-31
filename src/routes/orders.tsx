@@ -5,6 +5,8 @@ import DataTable, { createColumn } from "../components/DataTable";
 import type { Order } from "../types/api";
 import type { ColumnDef } from "@tanstack/react-table";
 import { Input } from "../components/ui/Input";
+import { useEffect, useState } from "react";
+import { useDebounce } from "../hooks/useDebounce";
 
 interface OrderSearchParams {
   page?: number;
@@ -35,11 +37,32 @@ function OrdersPage() {
     sortOrder = "asc",
   } = Route.useSearch();
 
+  // Local state for immediate UI updates
+  const [localFreight, setLocalFreight] = useState(freight?.toString() || "");
+
+  // Debounced value
+  const debouncedFreight = useDebounce(localFreight, 500);
+
+  // Sync local state with URL params when they change
+  useEffect(() => {
+    setLocalFreight(freight?.toString() || "");
+  }, [freight]);
+
   const updateSearch = (updates: Partial<OrderSearchParams>) => {
     navigate({
       search: (prev) => ({ ...prev, ...updates, page: updates.page || 1 }),
     });
   };
+
+  // Update search when debounced value changes
+  useEffect(() => {
+    const freightValue = debouncedFreight
+      ? Number(debouncedFreight)
+      : undefined;
+    if (freightValue !== freight) {
+      updateSearch({ freight: freightValue, page: 1 });
+    }
+  }, [debouncedFreight]);
 
   const { data, isLoading, error } = useQuery({
     queryKey: ["orders", { page, pageSize, freight, sortBy, sortOrder }],
@@ -110,12 +133,9 @@ function OrdersPage() {
           <div className="space-y-1">
             <Input
               type="number"
-              value={freight ?? ""}
+              value={localFreight}
               onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                updateSearch({
-                  freight: e.target.value ? Number(e.target.value) : undefined,
-                  page: 1,
-                })
+                setLocalFreight(e.target.value)
               }
               placeholder="e.g., 32,38"
               className="max-w-sm bg-background"

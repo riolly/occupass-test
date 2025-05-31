@@ -5,6 +5,8 @@ import DataTable, { createColumn } from "../components/DataTable";
 import type { Customer } from "../types/api";
 import type { ColumnDef } from "@tanstack/react-table";
 import { Input } from "../components/ui/Input";
+import { useEffect, useState } from "react";
+import { useDebounce } from "../hooks/useDebounce";
 
 interface CustomerSearchParams {
   page?: number;
@@ -38,11 +40,41 @@ function CustomersPage() {
     sortOrder = "asc",
   } = Route.useSearch();
 
+  // Local state for immediate UI updates
+  const [localCountry, setLocalCountry] = useState(country);
+  const [localCustomerId, setLocalCustomerId] = useState(customerId);
+
+  // Debounced values
+  const debouncedCountry = useDebounce(localCountry, 500);
+  const debouncedCustomerId = useDebounce(localCustomerId, 500);
+
+  // Sync local state with URL params when they change
+  useEffect(() => {
+    setLocalCountry(country);
+  }, [country]);
+
+  useEffect(() => {
+    setLocalCustomerId(customerId);
+  }, [customerId]);
+
   const updateSearch = (updates: Partial<CustomerSearchParams>) => {
     navigate({
       search: (prev) => ({ ...prev, ...updates, page: updates.page || 1 }),
     });
   };
+
+  // Update search when debounced values change
+  useEffect(() => {
+    if (debouncedCountry !== country) {
+      updateSearch({ country: debouncedCountry, page: 1 });
+    }
+  }, [debouncedCountry]);
+
+  useEffect(() => {
+    if (debouncedCustomerId !== customerId) {
+      updateSearch({ customerId: debouncedCustomerId, page: 1 });
+    }
+  }, [debouncedCustomerId]);
 
   const { data, isLoading, error } = useQuery({
     queryKey: [
@@ -116,9 +148,9 @@ function CustomersPage() {
             Filter by Country
           </label>
           <Input
-            value={country}
+            value={localCountry}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-              updateSearch({ country: e.target.value, page: 1 })
+              setLocalCountry(e.target.value)
             }
             placeholder="e.g., Germany, USA..."
             className="max-w-sm bg-background"
@@ -129,9 +161,9 @@ function CustomersPage() {
             Search by Customer ID
           </label>
           <Input
-            value={customerId}
+            value={localCustomerId}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-              updateSearch({ customerId: e.target.value, page: 1 })
+              setLocalCustomerId(e.target.value)
             }
             placeholder="e.g., ALFKI, BERGS..."
             className="max-w-sm bg-background"
