@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { ordersApi, customersApi, formatDate } from "../services/api";
-import Button from "../components/ui/Button";
+import { Button } from "../components/ui/Button";
 
 export const Route = createFileRoute("/orders/$orderId")({
   component: OrderDetailPage,

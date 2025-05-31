@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { customersApi, ordersApi, formatDate } from "../services/api";
 import DataTable, { type Column } from "../components/DataTable";
 import type { Order } from "../types/api";
-import Button from "../components/ui/Button";
+import { Button } from "../components/ui/Button";
 
 export const Route = createFileRoute("/customers/$customerId")({
   component: CustomerDetailPage,
