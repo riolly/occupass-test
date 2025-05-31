@@ -4,12 +4,13 @@ import { customersApi } from "../services/api";
 import DataTable, { createColumn } from "../components/DataTable";
 import type { Customer } from "../types/api";
 import type { ColumnDef } from "@tanstack/react-table";
+import { Input } from "../components/ui/Input";
 
 interface CustomerSearchParams {
   page?: number;
   pageSize?: number;
-  search?: string;
   country?: string;
+  customerId?: string;
   sortBy?: string;
   sortOrder?: "asc" | "desc";
 }
@@ -19,8 +20,8 @@ export const Route = createFileRoute("/customers")({
   validateSearch: (search: Record<string, unknown>): CustomerSearchParams => ({
     page: Number(search?.page) || 1,
     pageSize: Number(search?.pageSize) || 25,
-    search: (search?.search as string) || "",
     country: (search?.country as string) || "",
+    customerId: (search?.customerId as string) || "",
     sortBy: (search?.sortBy as string) || "",
     sortOrder: (search?.sortOrder as "asc" | "desc") || "asc",
   }),
@@ -31,23 +32,31 @@ function CustomersPage() {
   const {
     page = 1,
     pageSize = 25,
-    search = "",
     country = "",
+    customerId = "",
     sortBy = "",
     sortOrder = "asc",
   } = Route.useSearch();
 
+  const updateSearch = (updates: Partial<CustomerSearchParams>) => {
+    navigate({
+      search: (prev) => ({ ...prev, ...updates, page: updates.page || 1 }),
+    });
+  };
+
   const { data, isLoading, error } = useQuery({
     queryKey: [
       "customers",
-      { page, pageSize, search, country, sortBy, sortOrder },
+      { page, pageSize, country, customerId, sortBy, sortOrder },
     ],
     queryFn: async () => {
       const params: any = {
         skip: (page - 1) * pageSize,
         take: pageSize,
+        include: "total", // Include total count for pagination
       };
 
+      // Server-side sorting
       if (sortBy) {
         if (sortOrder === "desc") {
           params.orderByDesc = sortBy;
@@ -56,29 +65,21 @@ function CustomersPage() {
         }
       }
 
+      // Server-side filtering
       if (country) {
         params.countryStartsWith = country;
       }
 
-      const response = await customersApi.queryCustomers(params);
-
-      // Filter by search locally since the API doesn't support general search
-      let filteredResults = response.results;
-      if (search) {
-        const searchLower = search.toLowerCase();
-        filteredResults = response.results.filter(
-          (customer) =>
-            customer.companyName.toLowerCase().includes(searchLower) ||
-            customer.contactName.toLowerCase().includes(searchLower) ||
-            customer.city.toLowerCase().includes(searchLower) ||
-            customer.country.toLowerCase().includes(searchLower)
-        );
+      if (customerId) {
+        params.ids = [customerId]; // API accepts array of IDs
       }
 
+      const response = await customersApi.queryCustomers(params);
+
       return {
-        ...response,
-        results: filteredResults,
-        total: filteredResults.length, // Note: This won't be accurate for server-side pagination with filtering
+        results: response.results,
+        total: response.total,
+        offset: response.offset,
       };
     },
   });
@@ -97,6 +98,8 @@ function CustomersPage() {
     navigate({ to: `/customers/${customer.id}` });
   };
 
+  const pageCount = data ? Math.ceil(data.total / pageSize) : 0;
+
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="mb-6">
@@ -106,16 +109,59 @@ function CustomersPage() {
         </p>
       </div>
 
+      {/* Search Filters */}
+      <div className="mb-4 flex gap-4">
+        <div className="space-y-2">
+          <label className="text-sm font-medium text-gray-700">
+            Filter by Country
+          </label>
+          <Input
+            value={country}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+              updateSearch({ country: e.target.value, page: 1 })
+            }
+            placeholder="e.g., Germany, USA..."
+            className="max-w-sm bg-background"
+          />
+        </div>
+        <div className="space-y-2">
+          <label className="text-sm font-medium text-gray-700">
+            Search by Customer ID
+          </label>
+          <Input
+            value={customerId}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+              updateSearch({ customerId: e.target.value, page: 1 })
+            }
+            placeholder="e.g., ALFKI, BERGS..."
+            className="max-w-sm bg-background"
+          />
+        </div>
+      </div>
+
       <DataTable
         data={data?.results || []}
         columns={columns}
         loading={isLoading}
         error={error?.message}
         onRowClick={handleRowClick}
-        initialPageSize={pageSize}
+        // Server-side pagination
         enablePagination={true}
+        pageCount={pageCount}
+        currentPage={page}
+        pageSize={pageSize}
+        totalResults={data?.total || 0}
+        onPageChange={(newPage) => updateSearch({ page: newPage })}
+        onPageSizeChange={(newPageSize) =>
+          updateSearch({ pageSize: newPageSize, page: 1 })
+        }
+        // Server-side sorting
         enableSorting={true}
-        enableFiltering={true}
+        sortBy={sortBy}
+        sortOrder={sortOrder}
+        onSort={(key, order) =>
+          updateSearch({ sortBy: key, sortOrder: order, page: 1 })
+        }
       />
     </div>
   );

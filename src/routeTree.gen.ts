@@ -15,7 +15,6 @@ import { Route as OrdersImport } from './routes/orders'
 import { Route as CustomersImport } from './routes/customers'
 import { Route as IndexImport } from './routes/index'
 import { Route as OrdersOrderIdImport } from './routes/orders.$orderId'
-import { Route as DemoTanstackQueryImport } from './routes/demo.tanstack-query'
 import { Route as CustomersCustomerIdImport } from './routes/customers.$customerId'
 
 // Create/Update Routes
@@ -42,12 +41,6 @@ const OrdersOrderIdRoute = OrdersOrderIdImport.update({
   id: '/$orderId',
   path: '/$orderId',
   getParentRoute: () => OrdersRoute,
-} as any)
-
-const DemoTanstackQueryRoute = DemoTanstackQueryImport.update({
-  id: '/demo/tanstack-query',
-  path: '/demo/tanstack-query',
-  getParentRoute: () => rootRoute,
 } as any)
 
 const CustomersCustomerIdRoute = CustomersCustomerIdImport.update({
@@ -87,13 +80,6 @@ declare module '@tanstack/react-router' {
       fullPath: '/customers/$customerId'
       preLoaderRoute: typeof CustomersCustomerIdImport
       parentRoute: typeof CustomersImport
-    }
-    '/demo/tanstack-query': {
-      id: '/demo/tanstack-query'
-      path: '/demo/tanstack-query'
-      fullPath: '/demo/tanstack-query'
-      preLoaderRoute: typeof DemoTanstackQueryImport
-      parentRoute: typeof rootRoute
     }
     '/orders/$orderId': {
       id: '/orders/$orderId'
@@ -135,7 +121,6 @@ export interface FileRoutesByFullPath {
   '/customers': typeof CustomersRouteWithChildren
   '/orders': typeof OrdersRouteWithChildren
   '/customers/$customerId': typeof CustomersCustomerIdRoute
-  '/demo/tanstack-query': typeof DemoTanstackQueryRoute
   '/orders/$orderId': typeof OrdersOrderIdRoute
 }
 
@@ -144,7 +129,6 @@ export interface FileRoutesByTo {
   '/customers': typeof CustomersRouteWithChildren
   '/orders': typeof OrdersRouteWithChildren
   '/customers/$customerId': typeof CustomersCustomerIdRoute
-  '/demo/tanstack-query': typeof DemoTanstackQueryRoute
   '/orders/$orderId': typeof OrdersOrderIdRoute
 }
 
@@ -154,7 +138,6 @@ export interface FileRoutesById {
   '/customers': typeof CustomersRouteWithChildren
   '/orders': typeof OrdersRouteWithChildren
   '/customers/$customerId': typeof CustomersCustomerIdRoute
-  '/demo/tanstack-query': typeof DemoTanstackQueryRoute
   '/orders/$orderId': typeof OrdersOrderIdRoute
 }
 
@@ -165,7 +148,6 @@ export interface FileRouteTypes {
     | '/customers'
     | '/orders'
     | '/customers/$customerId'
-    | '/demo/tanstack-query'
     | '/orders/$orderId'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -173,7 +155,6 @@ export interface FileRouteTypes {
     | '/customers'
     | '/orders'
     | '/customers/$customerId'
-    | '/demo/tanstack-query'
     | '/orders/$orderId'
   id:
     | '__root__'
@@ -181,7 +162,6 @@ export interface FileRouteTypes {
     | '/customers'
     | '/orders'
     | '/customers/$customerId'
-    | '/demo/tanstack-query'
     | '/orders/$orderId'
   fileRoutesById: FileRoutesById
 }
@@ -190,14 +170,12 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   CustomersRoute: typeof CustomersRouteWithChildren
   OrdersRoute: typeof OrdersRouteWithChildren
-  DemoTanstackQueryRoute: typeof DemoTanstackQueryRoute
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   CustomersRoute: CustomersRouteWithChildren,
   OrdersRoute: OrdersRouteWithChildren,
-  DemoTanstackQueryRoute: DemoTanstackQueryRoute,
 }
 
 export const routeTree = rootRoute
@@ -212,8 +190,7 @@ export const routeTree = rootRoute
       "children": [
         "/",
         "/customers",
-        "/orders",
-        "/demo/tanstack-query"
+        "/orders"
       ]
     },
     "/": {
@@ -234,9 +211,6 @@ export const routeTree = rootRoute
     "/customers/$customerId": {
       "filePath": "customers.$customerId.tsx",
       "parent": "/customers"
-    },
-    "/demo/tanstack-query": {
-      "filePath": "demo.tanstack-query.tsx"
     },
     "/orders/$orderId": {
       "filePath": "orders.$orderId.tsx",

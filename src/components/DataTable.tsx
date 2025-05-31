@@ -2,9 +2,6 @@ import * as React from "react";
 import {
   useReactTable,
   getCoreRowModel,
-  getSortedRowModel,
-  getFilteredRowModel,
-  getPaginationRowModel,
   flexRender,
   type ColumnDef,
   type SortingState,
@@ -35,7 +32,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "./ui/Select";
-import { Input } from "./ui/Input";
 import { ChevronUpIcon, ChevronDownIcon } from "lucide-react";
 
 interface DataTableProps<TData, TValue> {
@@ -45,9 +41,18 @@ interface DataTableProps<TData, TValue> {
   error?: string;
   enablePagination?: boolean;
   enableSorting?: boolean;
-  enableFiltering?: boolean;
   onRowClick?: (row: TData) => void;
-  initialPageSize?: number;
+  // Server-side pagination props
+  pageCount?: number;
+  currentPage?: number;
+  pageSize?: number;
+  totalResults?: number;
+  onPageChange?: (page: number) => void;
+  onPageSizeChange?: (size: number) => void;
+  // Server-side sorting props
+  sortBy?: string;
+  sortOrder?: "asc" | "desc";
+  onSort?: (key: string, order: "asc" | "desc") => void;
 }
 
 export default function DataTable<TData, TValue>({
@@ -57,9 +62,17 @@ export default function DataTable<TData, TValue>({
   error,
   enablePagination = true,
   enableSorting = true,
-  enableFiltering = true,
   onRowClick,
-  initialPageSize = 25,
+  // Server-side props
+  pageCount = 0,
+  currentPage = 1,
+  pageSize = 25,
+  totalResults = 0,
+  onPageChange,
+  onPageSizeChange,
+  sortBy,
+  sortOrder,
+  onSort,
 }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
@@ -67,34 +80,44 @@ export default function DataTable<TData, TValue>({
   );
   const [columnVisibility, setColumnVisibility] =
     React.useState<VisibilityState>({});
-  const [globalFilter, setGlobalFilter] = React.useState("");
 
   const table = useReactTable({
     data,
     columns,
     getCoreRowModel: getCoreRowModel(),
-    getSortedRowModel: enableSorting ? getSortedRowModel() : undefined,
-    getFilteredRowModel: enableFiltering ? getFilteredRowModel() : undefined,
-    getPaginationRowModel: enablePagination
-      ? getPaginationRowModel()
-      : undefined,
+    // Disable built-in features for server-side operations
+    manualSorting: enableSorting,
+    manualFiltering: false,
+    manualPagination: enablePagination,
+    pageCount: pageCount,
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
     onColumnVisibilityChange: setColumnVisibility,
-    onGlobalFilterChange: setGlobalFilter,
-    globalFilterFn: "includesString",
-    initialState: {
-      pagination: {
-        pageSize: initialPageSize,
-      },
-    },
     state: {
       sorting,
       columnFilters,
       columnVisibility,
-      globalFilter,
+      pagination: {
+        pageIndex: (currentPage || 1) - 1,
+        pageSize: pageSize || 25,
+      },
     },
   });
+
+  const handleSort = (key: string) => {
+    if (!enableSorting || !onSort) return;
+    const newOrder = sortBy === key && sortOrder === "asc" ? "desc" : "asc";
+    onSort(key, newOrder);
+  };
+
+  const getSortIcon = (key: string) => {
+    if (!enableSorting || sortBy !== key) return null;
+    return sortOrder === "asc" ? (
+      <ChevronUpIcon className="h-4 w-4" />
+    ) : (
+      <ChevronDownIcon className="h-4 w-4" />
+    );
+  };
 
   if (error) {
     return (
@@ -109,114 +132,82 @@ export default function DataTable<TData, TValue>({
 
   return (
     <div className="space-y-4">
-      {/* Global Filter */}
-      {enableFiltering && (
-        <div className="flex items-center gap-2">
-          <Input
-            placeholder="Search all columns..."
-            value={globalFilter}
-            onChange={(e) => setGlobalFilter(e.target.value)}
-            className="max-w-sm"
-          />
-        </div>
-      )}
-
       {/* Table */}
-      <div className="rounded-md border">
-        <Table>
-          <TableHeader>
-            {table.getHeaderGroups().map((headerGroup) => (
-              <TableRow key={headerGroup.id}>
-                {headerGroup.headers.map((header) => (
-                  <TableHead key={header.id} className="relative">
-                    {header.isPlaceholder ? null : (
-                      <div
-                        className={`flex items-center gap-2 ${
-                          header.column.getCanSort()
-                            ? "cursor-pointer select-none"
-                            : ""
-                        }`}
-                        onClick={header.column.getToggleSortingHandler()}
-                      >
-                        {flexRender(
-                          header.column.columnDef.header,
-                          header.getContext()
-                        )}
-                        {enableSorting && header.column.getCanSort() && (
-                          <div className="ml-auto">
-                            {{
-                              asc: <ChevronUpIcon className="h-4 w-4" />,
-                              desc: <ChevronDownIcon className="h-4 w-4" />,
-                            }[header.column.getIsSorted() as string] ?? (
-                              <div className="h-4 w-4" />
-                            )}
-                          </div>
-                        )}
-                      </div>
-                    )}
-                  </TableHead>
+      <Table>
+        <TableHeader>
+          {table.getHeaderGroups().map((headerGroup) => (
+            <TableRow key={headerGroup.id}>
+              {headerGroup.headers.map((header) => (
+                <TableHead key={header.id} className="relative">
+                  {header.isPlaceholder ? null : (
+                    <div
+                      className={`flex items-center gap-2 ${
+                        enableSorting && onSort
+                          ? "cursor-pointer select-none"
+                          : ""
+                      }`}
+                      onClick={() =>
+                        enableSorting && handleSort(header.column.id)
+                      }
+                    >
+                      {flexRender(
+                        header.column.columnDef.header,
+                        header.getContext()
+                      )}
+                      {enableSorting && onSort && (
+                        <div className="ml-auto">
+                          {getSortIcon(header.column.id) || (
+                            <div className="h-4 w-4" />
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </TableHead>
+              ))}
+            </TableRow>
+          ))}
+        </TableHeader>
+        <TableBody>
+          {loading ? (
+            <TableRow>
+              <TableCell colSpan={columns.length} className="h-24 text-center">
+                Loading...
+              </TableCell>
+            </TableRow>
+          ) : table.getRowModel().rows?.length ? (
+            table.getRowModel().rows.map((row) => (
+              <TableRow
+                key={row.id}
+                data-state={row.getIsSelected() && "selected"}
+                className={onRowClick ? "cursor-pointer" : ""}
+                onClick={() => onRowClick?.(row.original)}
+              >
+                {row.getVisibleCells().map((cell) => (
+                  <TableCell key={cell.id}>
+                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                  </TableCell>
                 ))}
               </TableRow>
-            ))}
-          </TableHeader>
-          <TableBody>
-            {loading ? (
-              <TableRow>
-                <TableCell
-                  colSpan={columns.length}
-                  className="h-24 text-center"
-                >
-                  Loading...
-                </TableCell>
-              </TableRow>
-            ) : table.getRowModel().rows?.length ? (
-              table.getRowModel().rows.map((row) => (
-                <TableRow
-                  key={row.id}
-                  data-state={row.getIsSelected() && "selected"}
-                  className={onRowClick ? "cursor-pointer" : ""}
-                  onClick={() => onRowClick?.(row.original)}
-                >
-                  {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id}>
-                      {flexRender(
-                        cell.column.columnDef.cell,
-                        cell.getContext()
-                      )}
-                    </TableCell>
-                  ))}
-                </TableRow>
-              ))
-            ) : (
-              <TableRow>
-                <TableCell
-                  colSpan={columns.length}
-                  className="h-24 text-center"
-                >
-                  No results found.
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
-      </div>
+            ))
+          ) : (
+            <TableRow>
+              <TableCell colSpan={columns.length} className="h-24 text-center">
+                No results found.
+              </TableCell>
+            </TableRow>
+          )}
+        </TableBody>
+      </Table>
 
-      {/* Pagination */}
-      {enablePagination && (
+      {/* Server-side Pagination */}
+      {enablePagination && onPageChange && onPageSizeChange && (
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <span className="text-sm text-gray-700">
-              Showing{" "}
-              {table.getState().pagination.pageIndex *
-                table.getState().pagination.pageSize +
-                1}{" "}
-              to{" "}
-              {Math.min(
-                (table.getState().pagination.pageIndex + 1) *
-                  table.getState().pagination.pageSize,
-                table.getFilteredRowModel().rows.length
-              )}{" "}
-              of {table.getFilteredRowModel().rows.length} results
+              Showing {totalResults > 0 ? (currentPage - 1) * pageSize + 1 : 0}{" "}
+              to {Math.min(currentPage * pageSize, totalResults)} of{" "}
+              {totalResults} results
             </span>
           </div>
 
@@ -226,12 +217,12 @@ export default function DataTable<TData, TValue>({
                 Rows per page:
               </span>
               <Select
-                value={table.getState().pagination.pageSize.toString()}
+                value={pageSize.toString()}
                 onValueChange={(value: string) => {
-                  table.setPageSize(Number(value));
+                  onPageSizeChange(Number(value));
                 }}
               >
-                <SelectTrigger className="w-[70px]">
+                <SelectTrigger className="w-[70px] bg-background">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -250,29 +241,23 @@ export default function DataTable<TData, TValue>({
                     href="#"
                     onClick={(e) => {
                       e.preventDefault();
-                      table.previousPage();
+                      if (currentPage > 1) {
+                        onPageChange(currentPage - 1);
+                      }
                     }}
                     className={
-                      !table.getCanPreviousPage()
-                        ? "pointer-events-none opacity-50"
-                        : ""
+                      currentPage <= 1 ? "pointer-events-none opacity-50" : ""
                     }
                   />
                 </PaginationItem>
 
                 {/* Page numbers with ellipsis */}
-                {Array.from({ length: table.getPageCount() }, (_, i) => i)
+                {Array.from({ length: pageCount }, (_, i) => i + 1)
                   .filter((page) => {
-                    const currentPage = table.getState().pagination.pageIndex;
                     const distance = Math.abs(page - currentPage);
-                    return (
-                      distance <= 2 ||
-                      page === 0 ||
-                      page === table.getPageCount() - 1
-                    );
+                    return distance <= 2 || page === 1 || page === pageCount;
                   })
                   .map((page, index, array) => {
-                    const currentPage = table.getState().pagination.pageIndex;
                     const showEllipsis =
                       index > 0 && array[index - 1] !== page - 1;
 
@@ -289,10 +274,10 @@ export default function DataTable<TData, TValue>({
                             isActive={page === currentPage}
                             onClick={(e) => {
                               e.preventDefault();
-                              table.setPageIndex(page);
+                              onPageChange(page);
                             }}
                           >
-                            {page + 1}
+                            {page}
                           </PaginationLink>
                         </PaginationItem>
                       </React.Fragment>
@@ -304,10 +289,12 @@ export default function DataTable<TData, TValue>({
                     href="#"
                     onClick={(e) => {
                       e.preventDefault();
-                      table.nextPage();
+                      if (currentPage < pageCount) {
+                        onPageChange(currentPage + 1);
+                      }
                     }}
                     className={
-                      !table.getCanNextPage()
+                      currentPage >= pageCount
                         ? "pointer-events-none opacity-50"
                         : ""
                     }
