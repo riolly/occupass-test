@@ -1,4 +1,3 @@
-import { Button } from "./ui/Button";
 import { Input } from "./ui/Input";
 import {
   Select,
@@ -7,6 +6,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "./ui/Select";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "./ui/pagination";
 import { ChevronUpIcon, ChevronDownIcon } from "lucide-react";
 
 export interface Column<T> {
@@ -183,7 +191,9 @@ export default function DataTable<T extends Record<string, any>>({
 
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2">
-              <span className="text-sm text-gray-700">Rows per page:</span>
+              <span className="text-sm text-gray-700 whitespace-nowrap">
+                Rows per page:
+              </span>
               <Select
                 value={pagination.pageSize.toString()}
                 onValueChange={(value: string) =>
@@ -202,33 +212,108 @@ export default function DataTable<T extends Record<string, any>>({
               </Select>
             </div>
 
-            <div className="flex items-center gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() =>
-                  pagination.onPageChange(pagination.currentPage - 1)
-                }
-                disabled={pagination.currentPage <= 1}
-              >
-                Previous
-              </Button>
+            <Pagination>
+              <PaginationContent>
+                <PaginationItem>
+                  <PaginationPrevious
+                    href="#"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      if (pagination.currentPage > 1) {
+                        pagination.onPageChange(pagination.currentPage - 1);
+                      }
+                    }}
+                    className={
+                      pagination.currentPage <= 1
+                        ? "pointer-events-none opacity-50"
+                        : ""
+                    }
+                  />
+                </PaginationItem>
 
-              <span className="text-sm text-gray-700">
-                Page {pagination.currentPage} of {pagination.totalPages}
-              </span>
+                {/* First page */}
+                {pagination.currentPage > 3 && (
+                  <>
+                    <PaginationItem>
+                      <PaginationLink
+                        href="#"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          pagination.onPageChange(1);
+                        }}
+                      >
+                        1
+                      </PaginationLink>
+                    </PaginationItem>
+                    {pagination.currentPage > 4 && (
+                      <PaginationItem>
+                        <PaginationEllipsis />
+                      </PaginationItem>
+                    )}
+                  </>
+                )}
 
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() =>
-                  pagination.onPageChange(pagination.currentPage + 1)
-                }
-                disabled={pagination.currentPage >= pagination.totalPages}
-              >
-                Next
-              </Button>
-            </div>
+                {/* Page numbers around current page */}
+                {Array.from({ length: pagination.totalPages }, (_, i) => i + 1)
+                  .filter((page) => {
+                    const distance = Math.abs(page - pagination.currentPage);
+                    return distance <= 2;
+                  })
+                  .map((page) => (
+                    <PaginationItem key={page}>
+                      <PaginationLink
+                        href="#"
+                        isActive={page === pagination.currentPage}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          pagination.onPageChange(page);
+                        }}
+                      >
+                        {page}
+                      </PaginationLink>
+                    </PaginationItem>
+                  ))}
+
+                {/* Last page */}
+                {pagination.currentPage < pagination.totalPages - 2 && (
+                  <>
+                    {pagination.currentPage < pagination.totalPages - 3 && (
+                      <PaginationItem>
+                        <PaginationEllipsis />
+                      </PaginationItem>
+                    )}
+                    <PaginationItem>
+                      <PaginationLink
+                        href="#"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          pagination.onPageChange(pagination.totalPages);
+                        }}
+                      >
+                        {pagination.totalPages}
+                      </PaginationLink>
+                    </PaginationItem>
+                  </>
+                )}
+
+                <PaginationItem>
+                  <PaginationNext
+                    href="#"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      if (pagination.currentPage < pagination.totalPages) {
+                        pagination.onPageChange(pagination.currentPage + 1);
+                      }
+                    }}
+                    className={
+                      pagination.currentPage >= pagination.totalPages
+                        ? "pointer-events-none opacity-50"
+                        : ""
+                    }
+                  />
+                </PaginationItem>
+              </PaginationContent>
+            </Pagination>
           </div>
         </div>
       )}
