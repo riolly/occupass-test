@@ -78,10 +78,10 @@ function RouteComponent() {
       {orders.length > 0 && (
         <div className="mb-8 bg-white rounded-lg shadow-sm border border-gray-200 p-6">
           <div className="flex items-center gap-3 mb-4">
-            <Building2 className="w-6 h-6 text-blue-600" />
             <h2 className="text-xl font-semibold text-gray-900">
               Order Information
             </h2>
+            <Building2 className="w-6 h-6 text-blue-600" />
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
@@ -180,7 +180,7 @@ function RouteComponent() {
                         <div>
                           <label className="flex items-center gap-2 text-sm font-medium text-gray-500">
                             Shipped Date
-                            <Truck className="w-4 h-4 text-green-500" />
+                            <Truck className="w-4 h-4 text-gray-500" />
                           </label>
                           <p className="text-gray-900">
                             {formatDate(order.shippedDate)}
@@ -204,7 +204,7 @@ function RouteComponent() {
                 <div className="lg:col-span-2">
                   <div>
                     <div className="flex items-center gap-3 relative">
-                      <Package className="w-5 h-5 text-orange-600 absolute -left-8" />
+                      <Package className="w-5 h-5 text-gray-500 absolute -left-8" />
                       <h4 className="text-lg font-semibold text-gray-900">
                         Items ({orderDetails.length})
                       </h4>

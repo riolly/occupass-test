@@ -13,6 +13,7 @@ import { Input } from "../components/ui/Input";
 import { useCallback } from "react";
 import { useDebouncedSearch } from "../hooks/useDebounce";
 import { zodValidator } from "@tanstack/zod-adapter";
+import { Package } from "lucide-react";
 
 const queryKeyOptions = (search: QueryOrdersRequest) =>
   queryOptions({
@@ -118,7 +119,10 @@ function OrdersPage() {
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="mb-6">
-        <h1 className="text-3xl font-bold text-gray-900">Orders</h1>
+        <div className="flex items-center gap-3">
+          <h1 className="text-3xl font-bold text-gray-900">Orders</h1>
+          <Package className="w-8 h-8 text-blue-600" />
+        </div>
         <p className="text-gray-600 mt-2">Manage and view order information</p>
       </div>
 
@@ -272,10 +276,10 @@ function OrdersPage() {
         onPageSizeChange={(newPageSize) =>
           updateSearch({ take: newPageSize, skip: 0 })
         }
-        onRowClick={(row) => {
+        onRowClick={({ customerId }) => {
           navigate({
-            to: "/orders/$id",
-            params: { id: row.customerId },
+            to: "/orders/$customerId",
+            params: { customerId },
           });
         }}
         // Server-side sorting

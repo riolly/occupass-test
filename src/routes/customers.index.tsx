@@ -13,6 +13,7 @@ import { zodValidator } from "@tanstack/zod-adapter";
 import { useDebouncedSearch } from "../hooks/useDebounce";
 import { queryOptions, useSuspenseQuery } from "@tanstack/react-query";
 import { queryCustomers } from "@/services/api";
+import { Users } from "lucide-react";
 
 const queryKeyOptions = (search: QueryCustomersRequest) =>
   queryOptions({
@@ -109,7 +110,10 @@ function CustomersPage() {
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="mb-6">
-        <h1 className="text-3xl font-bold text-gray-900">Customers</h1>
+        <div className="flex items-center gap-3">
+          <h1 className="text-3xl font-bold text-gray-900">Customers</h1>
+          <Users className="w-8 h-8 text-blue-600" />
+        </div>
         <p className="text-gray-600 mt-2">
           Manage and view customer information
         </p>
