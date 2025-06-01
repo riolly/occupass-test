@@ -118,3 +118,9 @@ export const CustomerDetailsResponseSchema = z.object({
 export type CustomerDetailsResponse = z.infer<
   typeof CustomerDetailsResponseSchema
 >;
+
+// GetOrderDetails API schema
+export const OrderDetailsResponseSchema = z.object({
+  results: z.array(CustomerOrderSchema),
+});
+export type OrderDetailsResponse = z.infer<typeof OrderDetailsResponseSchema>;

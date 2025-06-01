@@ -272,6 +272,12 @@ function OrdersPage() {
         onPageSizeChange={(newPageSize) =>
           updateSearch({ take: newPageSize, skip: 0 })
         }
+        onRowClick={(row) => {
+          navigate({
+            to: "/orders/$id",
+            params: { id: row.customerId },
+          });
+        }}
         // Server-side sorting
         enableSorting={true}
         orderBy={orderBy}

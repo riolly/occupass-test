@@ -5,6 +5,7 @@ import type {
   QueryOrdersRequest,
   QueryResponse,
   CustomerDetailsResponse,
+  OrderDetailsResponse,
 } from "../types/api";
 
 const API_BASE_URL = "https://uitestapi.occupass.com";
@@ -58,6 +59,24 @@ export async function getCustomerDetails(
 
   if (!response.ok) {
     throw new Error(`Failed to fetch customer details: ${response.statusText}`);
+  }
+
+  return response.json();
+}
+
+export async function getOrderDetails(
+  customerId: string
+): Promise<OrderDetailsResponse> {
+  const response = await fetch(
+    `${API_BASE_URL}/api/GetOrders?customerId=${customerId}&jsconfig=eccn%2Cedv`,
+    {
+      method: "GET",
+      headers: { Accept: "application/json" },
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error(`Failed to fetch order details: ${response.statusText}`);
   }
 
   return response.json();
