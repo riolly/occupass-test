@@ -75,3 +75,46 @@ export const QueryOrdersRequestSchema = QueryBaseSchema.extend({
   ...OrderSchema.partial().shape,
 });
 export type QueryOrdersRequest = z.infer<typeof QueryOrdersRequestSchema>;
+
+// GetCustomerDetails API schemas
+export const OrderDetailSchema = z.object({
+  orderId: z.number().optional(),
+  productId: z.number().optional(),
+  unitPrice: z.number().optional(),
+  quantity: z.number().optional(),
+  discount: z.number().optional(),
+});
+export type OrderDetail = z.infer<typeof OrderDetailSchema>;
+
+export const CustomerOrderSchema = z.object({
+  order: OrderSchema,
+  orderDetails: z.array(OrderDetailSchema),
+});
+export type CustomerOrder = z.infer<typeof CustomerOrderSchema>;
+
+export const ResponseStatusSchema = z.object({
+  errorCode: z.string().optional(),
+  message: z.string().optional(),
+  stackTrace: z.string().optional(),
+  errors: z
+    .array(
+      z.object({
+        errorCode: z.string().optional(),
+        fieldName: z.string().optional(),
+        message: z.string().optional(),
+        meta: z.record(z.string()).optional(),
+      })
+    )
+    .optional(),
+  meta: z.record(z.string()).optional(),
+});
+export type ResponseStatus = z.infer<typeof ResponseStatusSchema>;
+
+export const CustomerDetailsResponseSchema = z.object({
+  customer: CustomerSchema,
+  orders: z.array(CustomerOrderSchema),
+  responseStatus: ResponseStatusSchema,
+});
+export type CustomerDetailsResponse = z.infer<
+  typeof CustomerDetailsResponseSchema
+>;
