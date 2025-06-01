@@ -10,13 +10,13 @@ import {
   Building2,
 } from "lucide-react";
 
-const queryKeyOptions = (params: { id: string }) =>
+const queryKeyOptions = (params: { customerId: string }) =>
   queryOptions({
-    queryKey: ["order", params.id],
-    queryFn: () => getOrderDetails(params.id),
+    queryKey: ["order", params.customerId],
+    queryFn: () => getOrderDetails(params.customerId),
   });
 
-export const Route = createFileRoute("/orders/$id")({
+export const Route = createFileRoute("/orders/$customerId")({
   component: RouteComponent,
   loader: async ({ context, params }) => {
     return await context.queryClient.ensureQueryData(queryKeyOptions(params));
@@ -24,9 +24,9 @@ export const Route = createFileRoute("/orders/$id")({
 });
 
 function RouteComponent() {
-  const { id } = Route.useParams();
+  const { customerId } = Route.useParams();
   const { data, isRefetching, error } = useSuspenseQuery(
-    queryKeyOptions({ id })
+    queryKeyOptions({ customerId })
   );
 
   if (error) {
@@ -51,7 +51,9 @@ function RouteComponent() {
           <h2 className="text-lg font-semibold text-yellow-900 mb-2">
             No Orders Found
           </h2>
-          <p className="text-yellow-700">No orders found for customer {id}.</p>
+          <p className="text-yellow-700">
+            No orders found for customer {customerId}.
+          </p>
         </div>
       </div>
     );
