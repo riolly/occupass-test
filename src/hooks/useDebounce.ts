@@ -30,7 +30,7 @@ export function useDebounce<T>(value: T, delay: number): T {
 export function useDebouncedSearch<T>(
   initialValue: T,
   onUpdate: (value: T) => void,
-  delay: number = 500
+  delay: number = 350
 ) {
   // Local state for immediate UI updates
   const [localValue, setLocalValue] = useState<T>(initialValue);
