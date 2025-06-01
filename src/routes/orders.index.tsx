@@ -37,7 +37,19 @@ function OrdersPage() {
   const { data, isRefetching, error } = useSuspenseQuery(
     queryKeyOptions(search)
   );
-  const { skip, take, freight, orderBy, orderByDesc } = search;
+  const {
+    skip,
+    take,
+    freight,
+    orderBy,
+    orderByDesc,
+    id,
+    customerId,
+    orderDate,
+    shipName,
+    shipCity,
+    shipCountry,
+  } = search;
 
   const updateSearch = useCallback(
     (updates: Partial<QueryOrdersRequest>) => {
@@ -52,6 +64,20 @@ function OrdersPage() {
     [navigate]
   );
 
+  // Debounced search hooks for all fields
+  const idSearch = useDebouncedSearch(id?.toString() || "", (value) => {
+    const idValue = value ? Number(value) : undefined;
+    updateSearch({ id: idValue, skip: 0 });
+  });
+
+  const customerIdSearch = useDebouncedSearch(customerId || "", (value) => {
+    updateSearch({ customerId: value || undefined, skip: 0 });
+  });
+
+  const orderDateSearch = useDebouncedSearch(orderDate || "", (value) => {
+    updateSearch({ orderDate: value || undefined, skip: 0 });
+  });
+
   // Debounced search hook for freight
   const freightSearch = useDebouncedSearch(
     freight?.toString() || "",
@@ -60,6 +86,18 @@ function OrdersPage() {
       updateSearch({ freight: freightValue, skip: 0 });
     }
   );
+
+  const shipNameSearch = useDebouncedSearch(shipName || "", (value) => {
+    updateSearch({ shipName: value || undefined, skip: 0 });
+  });
+
+  const shipCitySearch = useDebouncedSearch(shipCity || "", (value) => {
+    updateSearch({ shipCity: value || undefined, skip: 0 });
+  });
+
+  const shipCountrySearch = useDebouncedSearch(shipCountry || "", (value) => {
+    updateSearch({ shipCountry: value || undefined, skip: 0 });
+  });
 
   const columns: ColumnDef<Order>[] = [
     createColumn("id", "Order ID"),
@@ -84,26 +122,138 @@ function OrdersPage() {
         <p className="text-gray-600 mt-2">Manage and view order information</p>
       </div>
 
-      {/* Freight Search Filter */}
-      <div className="mb-4 flex gap-4">
-        <div className="space-y-2">
-          <label className="text-sm font-medium text-gray-700">
-            Filter by Freight ($)
-          </label>
-          <div className="space-y-1">
+      <div className="mb-6 bg-gray-50 rounded-lg">
+        <h2 className="text-lg font-semibold text-gray-900">Filters</h2>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-4 gap-y-2">
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-gray-700">
+              Order ID
+            </label>
             <Input
               type="number"
-              value={freightSearch.value}
+              value={idSearch.value}
               onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                freightSearch.setValue(e.target.value)
+                idSearch.setValue(e.target.value)
               }
-              placeholder="e.g., 32,38"
-              className="max-w-sm bg-background"
+              placeholder="e.g., 10248"
+              className="bg-background"
             />
-            <p className="text-xs text-gray-500">
-              Note: Use comma (,) as decimal separator
-            </p>
           </div>
+
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-gray-700">
+              Customer ID
+            </label>
+            <Input
+              type="text"
+              value={customerIdSearch.value}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                customerIdSearch.setValue(e.target.value)
+              }
+              placeholder="e.g., ALFKI"
+              className="bg-background"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-gray-700">
+              Order Date
+            </label>
+            <Input
+              type="date"
+              value={orderDateSearch.value}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                orderDateSearch.setValue(e.target.value)
+              }
+              className="bg-background"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-gray-700">
+              Ship Name
+            </label>
+            <Input
+              type="text"
+              value={shipNameSearch.value}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                shipNameSearch.setValue(e.target.value)
+              }
+              placeholder="e.g., Vins et alcools"
+              className="bg-background"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-gray-700">
+              Ship City
+            </label>
+            <Input
+              type="text"
+              value={shipCitySearch.value}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                shipCitySearch.setValue(e.target.value)
+              }
+              placeholder="e.g., Reims"
+              className="bg-background"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-gray-700">
+              Ship Country
+            </label>
+            <Input
+              type="text"
+              value={shipCountrySearch.value}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                shipCountrySearch.setValue(e.target.value)
+              }
+              placeholder="e.g., France"
+              className="bg-background"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-gray-700">
+              Freight ($)
+            </label>
+            <div className="space-y-1">
+              <Input
+                type="number"
+                value={freightSearch.value}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                  freightSearch.setValue(e.target.value)
+                }
+                placeholder="e.g., 32,38"
+                className="bg-background"
+              />
+              <p className="text-xs text-gray-500">
+                Note: Use comma (,) as decimal separator
+              </p>
+            </div>
+          </div>
+
+          {/* <div className="mt-6 justify-self-end">
+            <button
+              onClick={() =>
+                updateSearch({
+                  id: undefined,
+                  customerId: undefined,
+                  orderDate: undefined,
+                  shipName: undefined,
+                  shipCity: undefined,
+                  shipCountry: undefined,
+                  freight: undefined,
+                  skip: 0,
+                })
+              }
+              className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+            >
+              Clear All Filters
+            </button>
+          </div> */}
         </div>
       </div>
 

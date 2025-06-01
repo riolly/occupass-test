@@ -38,7 +38,19 @@ function CustomersPage() {
     queryKeyOptions(search)
   );
 
-  const { skip, take, countryStartsWith, ids, orderBy, orderByDesc } = search;
+  const {
+    skip,
+    take,
+    orderBy,
+    orderByDesc,
+    id,
+    companyName,
+    contactName,
+    contactTitle,
+    city,
+    country,
+    phone,
+  } = search;
 
   const updateSearch = useCallback(
     (updates: Partial<QueryCustomersRequest>) => {
@@ -53,18 +65,33 @@ function CustomersPage() {
     [navigate]
   );
 
-  const countrySearch = useDebouncedSearch(countryStartsWith, (value) => {
-    updateSearch({ countryStartsWith: value });
+  // Debounced search hooks for all CustomerSchema fields
+  const idSearch = useDebouncedSearch(id || "", (value) => {
+    updateSearch({ id: value || undefined, skip: 0 });
   });
 
-  const idsSearch = useDebouncedSearch(ids.join(", "), (value) => {
-    const idsArray = value
-      ? value
-          .split(",")
-          .map((id) => id.trim())
-          .filter(Boolean)
-      : [];
-    updateSearch({ ids: idsArray });
+  const companyNameSearch = useDebouncedSearch(companyName || "", (value) => {
+    updateSearch({ companyName: value || undefined, skip: 0 });
+  });
+
+  const contactNameSearch = useDebouncedSearch(contactName || "", (value) => {
+    updateSearch({ contactName: value || undefined, skip: 0 });
+  });
+
+  const contactTitleSearch = useDebouncedSearch(contactTitle || "", (value) => {
+    updateSearch({ contactTitle: value || undefined, skip: 0 });
+  });
+
+  const citySearch = useDebouncedSearch(city || "", (value) => {
+    updateSearch({ city: value || undefined, skip: 0 });
+  });
+
+  const countrySearch = useDebouncedSearch(country || "", (value) => {
+    updateSearch({ country: value || undefined, skip: 0 });
+  });
+
+  const phoneSearch = useDebouncedSearch(phone || "", (value) => {
+    updateSearch({ phone: value || undefined, skip: 0 });
   });
 
   const columns: ColumnDef<Customer>[] = [
@@ -89,33 +116,99 @@ function CustomersPage() {
       </div>
 
       {/* Search Filters */}
-      <div className="mb-4 space-y-4">
-        {/* First row of filters */}
-        <div className="flex gap-4 flex-wrap">
+      <div className="mb-6 bg-gray-50 rounded-lg">
+        <h2 className="text-lg font-semibold text-gray-900">Filters</h2>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-4 gap-y-2">
           <div className="space-y-2">
             <label className="text-sm font-medium text-gray-700">
-              Filter by Country
+              Customer ID
             </label>
+            <Input
+              value={idSearch.value}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                idSearch.setValue(e.target.value)
+              }
+              placeholder="e.g., ALFKI"
+              className="bg-background"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-gray-700">
+              Company Name
+            </label>
+            <Input
+              value={companyNameSearch.value}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                companyNameSearch.setValue(e.target.value)
+              }
+              placeholder="e.g., Alfreds Futterkiste"
+              className="bg-background"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-gray-700">
+              Contact Name
+            </label>
+            <Input
+              value={contactNameSearch.value}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                contactNameSearch.setValue(e.target.value)
+              }
+              placeholder="e.g., Maria Anders"
+              className="bg-background"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-gray-700">
+              Contact Title
+            </label>
+            <Input
+              value={contactTitleSearch.value}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                contactTitleSearch.setValue(e.target.value)
+              }
+              placeholder="e.g., Sales Representative"
+              className="bg-background"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-gray-700">City</label>
+            <Input
+              value={citySearch.value}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                citySearch.setValue(e.target.value)
+              }
+              placeholder="e.g., Berlin"
+              className="bg-background"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-gray-700">Country</label>
             <Input
               value={countrySearch.value}
               onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                 countrySearch.setValue(e.target.value)
               }
-              placeholder="e.g., Germany, USA..."
-              className="max-w-sm bg-background"
+              placeholder="e.g., Germany"
+              className="bg-background"
             />
           </div>
+
           <div className="space-y-2">
-            <label className="text-sm font-medium text-gray-700">
-              Search by Customer IDs (comma-separated)
-            </label>
+            <label className="text-sm font-medium text-gray-700">Phone</label>
             <Input
-              value={idsSearch.value}
+              value={phoneSearch.value}
               onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                idsSearch.setValue(e.target.value)
+                phoneSearch.setValue(e.target.value)
               }
-              placeholder="e.g., ALFKI, BERGS, ANTON"
-              className="max-w-sm bg-background"
+              placeholder="e.g., 030-0074321"
+              className="bg-background"
             />
           </div>
         </div>

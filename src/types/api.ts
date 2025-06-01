@@ -63,6 +63,7 @@ export const QueryCustomersRequestSchema = QueryBaseSchema.extend({
   fields: z.array(CustomerSchemaFieldSchema).optional(),
   countryStartsWith: z.string().optional().default(""),
   ids: z.array(z.string()).optional().default([]),
+  ...CustomerSchema.partial().shape,
 });
 export type QueryCustomersRequest = z.infer<typeof QueryCustomersRequestSchema>;
 
@@ -71,6 +72,6 @@ export const QueryOrdersRequestSchema = QueryBaseSchema.extend({
   orderByDesc: z.array(OrderSchemaFieldSchema).optional().default([]),
   include: z.array(z.string()).optional().default(["total"]),
   fields: z.array(OrderSchemaFieldSchema).optional(),
-  freight: z.number().optional(),
+  ...OrderSchema.partial().shape,
 });
 export type QueryOrdersRequest = z.infer<typeof QueryOrdersRequestSchema>;
