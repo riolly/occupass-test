@@ -50,9 +50,9 @@ interface DataTableProps<TData, TValue> {
   onPageChange?: (page: number) => void;
   onPageSizeChange?: (size: number) => void;
   // Server-side sorting props
-  sortBy?: string;
-  sortOrder?: "asc" | "desc";
-  onSort?: (key: string, order: "asc" | "desc") => void;
+  onSort?: (key: string) => void;
+  orderBy: string[];
+  orderByDesc: string[];
 }
 
 export default function DataTable<TData, TValue>({
@@ -70,9 +70,9 @@ export default function DataTable<TData, TValue>({
   totalResults = 0,
   onPageChange,
   onPageSizeChange,
-  sortBy,
-  sortOrder,
   onSort,
+  orderBy,
+  orderByDesc,
 }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
@@ -105,32 +105,24 @@ export default function DataTable<TData, TValue>({
   });
 
   const handleSort = (key: string) => {
-    if (!enableSorting || !onSort) return;
-    const newOrder = sortBy === key && sortOrder === "asc" ? "desc" : "asc";
-    onSort(key, newOrder);
+    onSort?.(key);
   };
 
   const getSortIcon = (key: string) => {
     if (!enableSorting) return null;
 
-    const isActive = sortBy === key;
-    const iconClass = isActive
-      ? "h-4 w-4 text-gray-900" // Prominent when active
-      : "h-3 w-3 text-gray-400 opacity-50"; // Subtle when inactive
-
-    if (isActive) {
-      return sortOrder === "asc" ? (
-        <ChevronUpIcon className={iconClass} />
-      ) : (
-        <ChevronDownIcon className={iconClass} />
-      );
+    if (orderBy.includes(key)) {
+      return <ChevronDownIcon className={"h-4 w-4 text-gray-900"} />;
     }
 
-    // Show both up and down arrows for inactive sortable columns
+    if (orderByDesc.includes(key)) {
+      return <ChevronUpIcon className={"h-4 w-4 text-gray-900"} />;
+    }
+
     return (
       <div className="flex flex-col -space-y-1">
-        <ChevronUpIcon className={iconClass} />
-        <ChevronDownIcon className={iconClass} />
+        <ChevronUpIcon className={"h-3 w-3 text-gray-400 opacity-50"} />
+        <ChevronDownIcon className={"h-3 w-3 text-gray-400 opacity-50"} />
       </div>
     );
   };

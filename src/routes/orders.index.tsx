@@ -1,46 +1,52 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
-import { ordersApi, formatDate } from "../services/api";
+import { queryOptions, useSuspenseQuery } from "@tanstack/react-query";
+import { queryOrders, formatDate } from "../services/api";
 import DataTable, { createColumn } from "../components/DataTable";
-import type { Order } from "../types/api";
+import {
+  QueryOrdersRequestSchema,
+  type Order,
+  type OrderSchemaField,
+  type QueryOrdersRequest,
+} from "../types/api";
 import type { ColumnDef } from "@tanstack/react-table";
 import { Input } from "../components/ui/Input";
 import { useCallback } from "react";
 import { useDebouncedSearch } from "../hooks/useDebounce";
+import { zodValidator } from "@tanstack/zod-adapter";
 
-interface OrderSearchParams {
-  page?: number;
-  pageSize?: number;
-  freight?: number;
-  sortBy?: string;
-  sortOrder?: "asc" | "desc";
-}
+const queryKeyOptions = (search: QueryOrdersRequest) =>
+  queryOptions({
+    queryKey: ["orders", search],
+    queryFn: () => queryOrders(search),
+  });
 
-export const Route = createFileRoute("/orders")({
+export const Route = createFileRoute("/orders/")({
   component: OrdersPage,
-  validateSearch: (search: Record<string, unknown>): OrderSearchParams => ({
-    page: Number(search?.page) || 1,
-    pageSize: Number(search?.pageSize) || 25,
-    freight: search?.freight ? Number(search.freight) : undefined,
-    sortBy: (search?.sortBy as string) || "",
-    sortOrder: (search?.sortOrder as "asc" | "desc") || "asc",
-  }),
+  validateSearch: zodValidator(QueryOrdersRequestSchema),
+  loaderDeps: ({ search }) => ({ search }),
+  loader: async ({ context, deps }) => {
+    return await context.queryClient.ensureQueryData(
+      queryKeyOptions(deps.search)
+    );
+  },
 });
 
 function OrdersPage() {
   const navigate = useNavigate({ from: "/orders" });
-  const {
-    page = 1,
-    pageSize = 25,
-    freight,
-    sortBy = "",
-    sortOrder = "asc",
-  } = Route.useSearch();
+  const search = Route.useSearch();
+  const { data, isRefetching, error } = useSuspenseQuery(
+    queryKeyOptions(search)
+  );
+  const { skip, take, freight, orderBy, orderByDesc } = search;
 
   const updateSearch = useCallback(
-    (updates: Partial<OrderSearchParams>) => {
+    (updates: Partial<QueryOrdersRequest>) => {
       navigate({
-        search: (prev) => ({ ...prev, ...updates, page: updates.page || 1 }),
+        search: (prev) => ({
+          ...prev,
+          ...updates,
+          page: (updates.skip || 0) / 25 + 1,
+        }),
       });
     },
     [navigate]
@@ -51,42 +57,9 @@ function OrdersPage() {
     freight?.toString() || "",
     (value) => {
       const freightValue = value ? Number(value) : undefined;
-      updateSearch({ freight: freightValue, page: 1 });
+      updateSearch({ freight: freightValue, skip: 0 });
     }
   );
-
-  const { data, isLoading, error } = useQuery({
-    queryKey: ["orders", { page, pageSize, freight, sortBy, sortOrder }],
-    queryFn: async () => {
-      const params: any = {
-        skip: (page - 1) * pageSize,
-        take: pageSize,
-        include: "total", // Include total count for pagination
-      };
-
-      // Server-side sorting
-      if (sortBy) {
-        if (sortOrder === "desc") {
-          params.orderByDesc = sortBy;
-        } else {
-          params.orderBy = sortBy;
-        }
-      }
-
-      // Server-side freight filtering
-      if (freight !== undefined) {
-        params.freight = freight;
-      }
-      console.log(params, "<<< params");
-      const response = await ordersApi.queryOrders(params);
-
-      return {
-        results: response.results,
-        total: response.total,
-        offset: response.offset,
-      };
-    },
-  });
 
   const columns: ColumnDef<Order>[] = [
     createColumn("id", "Order ID"),
@@ -102,7 +75,7 @@ function OrdersPage() {
     }),
   ];
 
-  const pageCount = data ? Math.ceil(data.total / pageSize) : 0;
+  const pageCount = data ? Math.ceil(data.total / take) : 0;
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -137,25 +110,50 @@ function OrdersPage() {
       <DataTable
         data={data?.results || []}
         columns={columns}
-        loading={isLoading}
+        loading={isRefetching}
         error={error?.message}
         // Server-side pagination
         enablePagination={true}
         pageCount={pageCount}
-        currentPage={page}
-        pageSize={pageSize}
+        currentPage={skip / take + 1}
+        pageSize={take}
         totalResults={data?.total || 0}
-        onPageChange={(newPage) => updateSearch({ page: newPage })}
+        onPageChange={(newPage) => updateSearch({ skip: (newPage - 1) * take })}
         onPageSizeChange={(newPageSize) =>
-          updateSearch({ pageSize: newPageSize, page: 1 })
+          updateSearch({ take: newPageSize, skip: 0 })
         }
         // Server-side sorting
         enableSorting={true}
-        sortBy={sortBy}
-        sortOrder={sortOrder}
-        onSort={(key, order) =>
-          updateSearch({ sortBy: key, sortOrder: order, page: 1 })
-        }
+        orderBy={orderBy}
+        orderByDesc={orderByDesc}
+        onSort={(key) => {
+          navigate({
+            search: (prev) => {
+              const keyAsField = key as OrderSchemaField;
+              const inOrderBy = prev.orderBy?.includes(keyAsField);
+              const inOrderByDesc = prev.orderByDesc?.includes(keyAsField);
+
+              let orderBy = [...(prev.orderBy || [])];
+              let orderByDesc = [...(prev.orderByDesc || [])];
+
+              if (inOrderByDesc) {
+                orderByDesc = orderByDesc.filter((k) => k !== keyAsField);
+              } else if (inOrderBy) {
+                orderBy = orderBy.filter((k) => k !== keyAsField);
+                orderByDesc = [...orderByDesc, keyAsField];
+              } else {
+                orderBy = [...orderBy, keyAsField];
+              }
+
+              return {
+                ...prev,
+                orderBy,
+                orderByDesc,
+                page: (skip || 0) / 25 + 1,
+              };
+            },
+          });
+        }}
       />
     </div>
   );
