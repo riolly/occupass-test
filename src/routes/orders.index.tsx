@@ -36,9 +36,7 @@ export const Route = createFileRoute("/orders/")({
 function OrdersPage() {
   const navigate = useNavigate({ from: "/orders" });
   const search = Route.useSearch();
-  const { data, isRefetching, error } = useSuspenseQuery(
-    queryKeyOptions(search)
-  );
+  const { data, isLoading, error } = useSuspenseQuery(queryKeyOptions(search));
   const {
     skip,
     take,
@@ -265,7 +263,7 @@ function OrdersPage() {
       <DataTable
         data={data?.results || []}
         columns={columns}
-        loading={isRefetching}
+        loading={isLoading}
         error={error?.message}
         // Server-side pagination
         enablePagination={true}
@@ -277,6 +275,14 @@ function OrdersPage() {
         onPageSizeChange={(newPageSize) =>
           updateSearch({ take: newPageSize, skip: 0 })
         }
+        // Link-based pagination for prefetching
+        generatePageUrl={(page) => ({
+          to: "/orders",
+          search: (prev: QueryOrdersRequest) => ({
+            ...prev,
+            skip: (page - 1) * take,
+          }),
+        })}
         rowRender={(rowData, defaultRowProps, cells) => (
           <Link
             to="/orders/$customerId/$orderId"

@@ -8,6 +8,7 @@ import {
   type ColumnFiltersState,
   type VisibilityState,
 } from "@tanstack/react-table";
+import { Link } from "@tanstack/react-router";
 import {
   Table,
   TableBody,
@@ -32,7 +33,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "./ui/Select";
-import { ChevronUpIcon, ChevronDownIcon } from "lucide-react";
+import {
+  ChevronUpIcon,
+  ChevronDownIcon,
+  ChevronLeftIcon,
+  ChevronRightIcon,
+} from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
@@ -60,6 +67,8 @@ interface DataTableProps<TData, TValue> {
   totalResults?: number;
   onPageChange?: (page: number) => void;
   onPageSizeChange?: (size: number) => void;
+  // Pagination URL generation for Link-based navigation
+  generatePageUrl?: (page: number) => { to: string; search?: any };
   // Server-side sorting props
   onSort?: (key: string) => void;
   orderBy: string[];
@@ -83,6 +92,7 @@ export default function DataTable<TData, TValue>({
   totalResults = 0,
   onPageChange,
   onPageSizeChange,
+  generatePageUrl,
   onSort,
   orderBy,
   orderByDesc,
@@ -291,18 +301,33 @@ export default function DataTable<TData, TValue>({
             <Pagination>
               <PaginationContent>
                 <PaginationItem>
-                  <PaginationPrevious
-                    href="#"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      if (currentPage > 1) {
-                        onPageChange(currentPage - 1);
+                  {generatePageUrl && currentPage > 1 ? (
+                    <Link
+                      {...generatePageUrl(currentPage - 1)}
+                      className={cn(
+                        "gap-1 px-2.5 sm:pl-2.5",
+                        "inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2",
+                        currentPage <= 1 ? "pointer-events-none opacity-50" : ""
+                      )}
+                      aria-label="Go to previous page"
+                    >
+                      <ChevronLeftIcon className="h-4 w-4" />
+                      <span className="hidden sm:block">Previous</span>
+                    </Link>
+                  ) : (
+                    <PaginationPrevious
+                      href="#"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        if (currentPage > 1) {
+                          onPageChange?.(currentPage - 1);
+                        }
+                      }}
+                      className={
+                        currentPage <= 1 ? "pointer-events-none opacity-50" : ""
                       }
-                    }}
-                    className={
-                      currentPage <= 1 ? "pointer-events-none opacity-50" : ""
-                    }
-                  />
+                    />
+                  )}
                 </PaginationItem>
 
                 {/* Page numbers with ellipsis */}
@@ -323,36 +348,71 @@ export default function DataTable<TData, TValue>({
                           </PaginationItem>
                         )}
                         <PaginationItem>
-                          <PaginationLink
-                            href="#"
-                            isActive={page === currentPage}
-                            onClick={(e) => {
-                              e.preventDefault();
-                              onPageChange(page);
-                            }}
-                          >
-                            {page}
-                          </PaginationLink>
+                          {generatePageUrl ? (
+                            <Link
+                              {...generatePageUrl(page)}
+                              aria-current={
+                                page === currentPage ? "page" : undefined
+                              }
+                              className={cn(
+                                "inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
+                                page === currentPage
+                                  ? "border border-input bg-background hover:bg-accent hover:text-accent-foreground"
+                                  : "hover:bg-accent hover:text-accent-foreground",
+                                "h-10 w-10"
+                              )}
+                            >
+                              {page}
+                            </Link>
+                          ) : (
+                            <PaginationLink
+                              href="#"
+                              isActive={page === currentPage}
+                              onClick={(e) => {
+                                e.preventDefault();
+                                onPageChange?.(page);
+                              }}
+                            >
+                              {page}
+                            </PaginationLink>
+                          )}
                         </PaginationItem>
                       </React.Fragment>
                     );
                   })}
 
                 <PaginationItem>
-                  <PaginationNext
-                    href="#"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      if (currentPage < pageCount) {
-                        onPageChange(currentPage + 1);
+                  {generatePageUrl && currentPage < pageCount ? (
+                    <Link
+                      {...generatePageUrl(currentPage + 1)}
+                      className={cn(
+                        "gap-1 px-2.5 sm:pr-2.5",
+                        "inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2",
+                        currentPage >= pageCount
+                          ? "pointer-events-none opacity-50"
+                          : ""
+                      )}
+                      aria-label="Go to next page"
+                    >
+                      <span className="hidden sm:block">Next</span>
+                      <ChevronRightIcon className="h-4 w-4" />
+                    </Link>
+                  ) : (
+                    <PaginationNext
+                      href="#"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        if (currentPage < pageCount) {
+                          onPageChange?.(currentPage + 1);
+                        }
+                      }}
+                      className={
+                        currentPage >= pageCount
+                          ? "pointer-events-none opacity-50"
+                          : ""
                       }
-                    }}
-                    className={
-                      currentPage >= pageCount
-                        ? "pointer-events-none opacity-50"
-                        : ""
-                    }
-                  />
+                    />
+                  )}
                 </PaginationItem>
               </PaginationContent>
             </Pagination>
