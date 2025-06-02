@@ -42,6 +42,17 @@ interface DataTableProps<TData, TValue> {
   enablePagination?: boolean;
   enableSorting?: boolean;
   onRowClick?: (row: TData) => void;
+  // Custom row rendering
+  rowRender?: (
+    rowData: TData,
+    defaultRowProps: {
+      key: string;
+      "data-state"?: string | false;
+      className?: string;
+      onClick?: () => void;
+    },
+    cells: React.ReactNode[]
+  ) => React.ReactNode;
   // Server-side pagination props
   pageCount?: number;
   currentPage?: number;
@@ -63,6 +74,8 @@ export default function DataTable<TData, TValue>({
   enablePagination = true,
   enableSorting = true,
   onRowClick,
+  // Custom row rendering
+  rowRender,
   // Server-side props
   pageCount = 0,
   currentPage = 1,
@@ -184,20 +197,53 @@ export default function DataTable<TData, TValue>({
               </TableCell>
             </TableRow>
           ) : table.getRowModel().rows?.length ? (
-            table.getRowModel().rows.map((row) => (
-              <TableRow
-                key={row.id}
-                data-state={row.getIsSelected() && "selected"}
-                className={onRowClick ? "cursor-pointer" : ""}
-                onClick={() => onRowClick?.(row.original)}
-              >
-                {row.getVisibleCells().map((cell) => (
-                  <TableCell key={cell.id}>
-                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                  </TableCell>
-                ))}
-              </TableRow>
-            ))
+            table.getRowModel().rows.map((row) => {
+              // Use custom rowRender if provided
+              if (rowRender) {
+                return (
+                  <React.Fragment key={row.id}>
+                    {rowRender(
+                      row.original,
+                      {
+                        key: row.id,
+                        "data-state": row.getIsSelected() && "selected",
+                        className: onRowClick ? "cursor-pointer" : "",
+                        onClick: () => onRowClick?.(row.original),
+                      },
+                      row
+                        .getVisibleCells()
+                        .map((cell) => (
+                          <TableCell key={cell.id}>
+                            {flexRender(
+                              cell.column.columnDef.cell,
+                              cell.getContext()
+                            )}
+                          </TableCell>
+                        ))
+                    )}
+                  </React.Fragment>
+                );
+              }
+
+              // Default row rendering
+              return (
+                <TableRow
+                  key={row.id}
+                  data-state={row.getIsSelected() && "selected"}
+                  className={onRowClick ? "cursor-pointer" : ""}
+                  onClick={() => onRowClick?.(row.original)}
+                >
+                  {row.getVisibleCells().map((cell) => (
+                    <TableCell key={cell.id}>
+                      {flexRender(
+                        cell.column.columnDef.cell,
+                        cell.getContext()
+                      )}
+                    </TableCell>
+                  ))}
+                </TableRow>
+              );
+            })
           ) : (
             <TableRow>
               <TableCell colSpan={columns.length} className="h-24 text-center">

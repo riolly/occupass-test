@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { QueryCustomersRequestSchema } from "../types/api";
 import DataTable, { createColumn } from "../components/DataTable";
 import type {
@@ -14,6 +14,7 @@ import { useDebouncedSearch } from "../hooks/useDebounce";
 import { queryOptions, useSuspenseQuery } from "@tanstack/react-query";
 import { queryCustomers } from "@/services/api";
 import { Users } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 const queryKeyOptions = (search: QueryCustomersRequest) =>
   queryOptions({
@@ -233,12 +234,19 @@ function CustomersPage() {
         onPageSizeChange={(newPageSize) =>
           updateSearch({ take: newPageSize, skip: 0 })
         }
-        onRowClick={(row) => {
-          navigate({
-            to: "/customer/$id",
-            params: { id: row.id },
-          });
-        }}
+        rowRender={(rowData, defaultRowProps, cells) => (
+          <Link
+            to="/customer/$id"
+            params={{ id: rowData.id }}
+            className={cn(
+              "hover:bg-muted/50 data-[state=selected]:bg-muted border-b transition-colors table-row",
+              defaultRowProps.className
+            )}
+            data-state={defaultRowProps["data-state"]}
+          >
+            {cells}
+          </Link>
+        )}
         // Server-side sorting
         enableSorting={true}
         orderBy={orderBy}

@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { queryOptions, useSuspenseQuery } from "@tanstack/react-query";
 import { queryOrders, formatDate } from "../services/api";
 import DataTable, { createColumn } from "../components/DataTable";
@@ -14,6 +14,7 @@ import { useCallback } from "react";
 import { useDebouncedSearch } from "../hooks/useDebounce";
 import { zodValidator } from "@tanstack/zod-adapter";
 import { Package } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 const queryKeyOptions = (search: QueryOrdersRequest) =>
   queryOptions({
@@ -276,12 +277,22 @@ function OrdersPage() {
         onPageSizeChange={(newPageSize) =>
           updateSearch({ take: newPageSize, skip: 0 })
         }
-        onRowClick={({ customerId, id }) => {
-          navigate({
-            to: "/orders/$customerId/$orderId",
-            params: { customerId, orderId: id?.toString() || "" },
-          });
-        }}
+        rowRender={(rowData, defaultRowProps, cells) => (
+          <Link
+            to="/orders/$customerId/$orderId"
+            params={{
+              customerId: rowData.customerId,
+              orderId: rowData.id?.toString() || "",
+            }}
+            className={cn(
+              "hover:bg-muted/50 data-[state=selected]:bg-muted border-b transition-colors table-row",
+              defaultRowProps.className
+            )}
+            data-state={defaultRowProps["data-state"]}
+          >
+            {cells}
+          </Link>
+        )}
         // Server-side sorting
         enableSorting={true}
         orderBy={orderBy}
