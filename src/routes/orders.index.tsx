@@ -283,22 +283,33 @@ function OrdersPage() {
             skip: (page - 1) * take,
           }),
         })}
-        rowRender={(rowData, defaultRowProps, cells) => (
-          <Link
-            to="/orders/$customerId/$orderId"
-            params={{
-              customerId: rowData.customerId,
-              orderId: rowData.id?.toString() || "",
-            }}
-            className={cn(
-              "hover:bg-muted/50 data-[state=selected]:bg-muted border-b transition-colors table-row",
-              defaultRowProps.className
-            )}
-            data-state={defaultRowProps["data-state"]}
-          >
-            {cells}
-          </Link>
-        )}
+        rowRender={(rowData, defaultRowProps, cells) => {
+          const { key, ...restProps } = defaultRowProps;
+          return (
+            <tr
+              key={key}
+              {...restProps}
+              className={cn(
+                "hover:bg-muted/50 data-[state=selected]:bg-muted border-b transition-colors",
+                defaultRowProps.className
+              )}
+            >
+              <td className="p-2 align-middle whitespace-nowrap">
+                <Link
+                  to="/orders/$customerId/$orderId"
+                  params={{
+                    customerId: rowData.customerId,
+                    orderId: rowData.id?.toString() || "",
+                  }}
+                  className="text-blue-600 hover:text-blue-800 hover:underline font-medium"
+                >
+                  {rowData.id}
+                </Link>
+              </td>
+              {cells.slice(1)}
+            </tr>
+          );
+        }}
         // Server-side sorting
         enableSorting={true}
         orderBy={orderBy}
