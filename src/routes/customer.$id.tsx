@@ -135,11 +135,11 @@ function RouteComponent() {
             <div className="flex items-center gap-3 mb-6">
               <Package className="w-6 h-6 text-green-600" />
               <h2 className="text-xl font-semibold text-gray-900">
-                Orders ({orders.length})
+                Orders ({orders?.length || 0})
               </h2>
             </div>
 
-            {orders.length === 0 ? (
+            {!orders || orders.length === 0 ? (
               <div className="text-center py-12 text-gray-500">
                 <Package className="w-12 h-12 mx-auto mb-3 text-gray-300" />
                 <p>No orders found for this customer</p>

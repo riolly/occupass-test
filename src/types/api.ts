@@ -112,7 +112,7 @@ export type ResponseStatus = z.infer<typeof ResponseStatusSchema>;
 
 export const CustomerDetailsResponseSchema = z.object({
   customer: CustomerSchema,
-  orders: z.array(CustomerOrderSchema),
+  orders: z.array(CustomerOrderSchema).optional(),
   responseStatus: ResponseStatusSchema,
 });
 export type CustomerDetailsResponse = z.infer<
