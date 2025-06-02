@@ -27,9 +27,7 @@ export const Route = createFileRoute("/orders/$customerId/$orderId")({
 
 function RouteComponent() {
   const { customerId, orderId } = Route.useParams();
-  const { data, isRefetching, error } = useSuspenseQuery(
-    queryKeyOptions({ customerId })
-  );
+  const { data, error } = useSuspenseQuery(queryKeyOptions({ customerId }));
 
   if (error) {
     return (
@@ -103,9 +101,6 @@ function RouteComponent() {
           <Building2 className="w-4 h-4" />
           View All Orders for {customerId}
         </Link>
-        {isRefetching && (
-          <div className="text-sm text-gray-500">Refreshing...</div>
-        )}
       </div>
 
       {/* Customer Info Card */}

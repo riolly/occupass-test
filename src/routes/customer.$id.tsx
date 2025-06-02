@@ -26,9 +26,7 @@ export const Route = createFileRoute("/customer/$id")({
 
 function RouteComponent() {
   const { id } = Route.useParams();
-  const { data, isRefetching, error } = useSuspenseQuery(
-    queryKeyOptions({ id })
-  );
+  const { data, error } = useSuspenseQuery(queryKeyOptions({ id }));
 
   if (error) {
     return (
@@ -56,9 +54,6 @@ function RouteComponent() {
           <ArrowLeft className="w-4 h-4" />
           Back to Customers
         </Link>
-        {isRefetching && (
-          <div className="text-sm text-gray-500">Refreshing...</div>
-        )}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
