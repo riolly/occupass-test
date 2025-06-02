@@ -304,6 +304,7 @@ export default function DataTable<TData, TValue>({
                   {generatePageUrl && currentPage > 1 ? (
                     <Link
                       {...generatePageUrl(currentPage - 1)}
+                      resetScroll={false}
                       className={cn(
                         "gap-1 px-2.5 sm:pl-2.5",
                         "inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2",
@@ -351,6 +352,7 @@ export default function DataTable<TData, TValue>({
                           {generatePageUrl ? (
                             <Link
                               {...generatePageUrl(page)}
+                              resetScroll={false}
                               aria-current={
                                 page === currentPage ? "page" : undefined
                               }
@@ -385,6 +387,7 @@ export default function DataTable<TData, TValue>({
                   {generatePageUrl && currentPage < pageCount ? (
                     <Link
                       {...generatePageUrl(currentPage + 1)}
+                      resetScroll={false}
                       className={cn(
                         "gap-1 px-2.5 sm:pr-2.5",
                         "inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2",
