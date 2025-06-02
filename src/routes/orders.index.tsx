@@ -276,10 +276,10 @@ function OrdersPage() {
         onPageSizeChange={(newPageSize) =>
           updateSearch({ take: newPageSize, skip: 0 })
         }
-        onRowClick={({ customerId }) => {
+        onRowClick={({ customerId, id }) => {
           navigate({
-            to: "/orders/$customerId",
-            params: { customerId },
+            to: "/orders/$customerId/$orderId",
+            params: { customerId, orderId: id?.toString() || "" },
           });
         }}
         // Server-side sorting

@@ -16,7 +16,7 @@ const queryKeyOptions = (params: { customerId: string }) =>
     queryFn: () => getOrderDetails(params.customerId),
   });
 
-export const Route = createFileRoute("/orders/$customerId")({
+export const Route = createFileRoute("/orders/$customerId/")({
   component: RouteComponent,
   loader: async ({ context, params }) => {
     return await context.queryClient.ensureQueryData(queryKeyOptions(params));
